@@ -1,7 +1,7 @@
-"""RainCheck API, Phase 1.
+"""RainCheck API.
 
-The risk score is advice. Payment relief is a separate rainfall rule and is
-not applied from this process yet (that is the contract phase).
+Phase 1 routes score rainfall. Loan routes talk to the local contract.
+The risk score is advice and is not an input to relief.
 """
 
 from __future__ import annotations
@@ -85,3 +85,8 @@ def _call(func):
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+from app.loans import router as loans_router
+
+app.include_router(loans_router)
