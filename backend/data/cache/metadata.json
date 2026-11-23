@@ -1,0 +1,12 @@
+{
+  "source": "Open-Meteo Archive API",
+  "url": "https://archive-api.open-meteo.com/v1/archive",
+  "license_note": "Open-Meteo data is published under CC-BY 4.0. Attribute Open-Meteo.",
+  "latitude": 15.58,
+  "longitude": 121.0,
+  "timezone": "Asia/Manila",
+  "start_date": "2001-01-01",
+  "end_date": "2026-11-18",
+  "rows": 9453,
+  "fetched_at": "2026-11-23T04:23:29.898596+00:00"
+}

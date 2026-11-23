@@ -1,0 +1,845 @@
+{
+  "generated_at": "2026-11-23T04:28:33.005774+00:00",
+  "weather_source": "Open-Meteo Archive API, cached on disk. CC-BY 4.0, attribute Open-Meteo.",
+  "region": {
+    "name": "Nueva Ecija",
+    "country": "Philippines",
+    "latitude": 15.58,
+    "longitude": 121.0,
+    "crop": "rice",
+    "planting_season_months": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
+  },
+  "label": {
+    "name": "seasonal_spi_gamma",
+    "threshold": -1.0,
+    "definition": "A complete wet season is labeled drought/stress when its seasonal SPI is at or below -1.0 (WMO moderate drought or worse). SPI here is the normal quantile of a two-parameter gamma distribution fit by method of moments to historical June-October rainfall totals at this grid point. This is a rainfall proxy, not a measured yield loss.",
+    "proxy": true,
+    "not_a_yield_label": true
+  },
+  "n_complete_seasons": 26,
+  "season_year_start": 2001,
+  "season_year_end": 2026,
+  "n_proxy_drought_seasons": 6,
+  "proxy_drought_years": [
+    2001,
+    2003,
+    2004,
+    2007,
+    2008,
+    2017
+  ],
+  "long_term_average_season_rainfall_mm": 1703.6653846153847,
+  "proposed_trigger_rainfall_mm": 1363,
+  "trigger_rule": "Integer millimetres, half-up rounding, fire only when observed season rainfall is strictly below the trigger. The model score is not an input. Default trigger is 80% of the long-term average seasonal rainfall.",
+  "model": {
+    "type": "gradient_boosting",
+    "params": {
+      "n_estimators": 100,
+      "max_depth": 2,
+      "learning_rate": 0.05,
+      "min_samples_leaf": 8,
+      "subsample": 0.9,
+      "random_state": 42
+    },
+    "decision_threshold": 0.5,
+    "class_weight": "balanced sample weights",
+    "global_importance": {
+      "fraction_elapsed": 0.0,
+      "cumulative_rainfall_mm": 0.017773666451252078,
+      "cumulative_pct_of_normal": 0.5713127964358073,
+      "recent_rainfall_mm": 0.0011542882859254815,
+      "recent_vs_normal": 0.0005144488547592302,
+      "rainfall_trend_mm": 0.0001903284624449562,
+      "temp_mean_to_date": 0.009432228243542468,
+      "temp_max_to_date": 0.3996222432662684,
+      "hot_days_to_date": 0.0
+    },
+    "served_model_trained_on": "all complete seasons, after the leave-one-season-out scores were computed"
+  },
+  "evaluation": {
+    "protocol": "leave-one-season-out. Each test row is one season, scored at a single week.",
+    "headline_week": 12,
+    "season_weeks": 21,
+    "by_week": {
+      "12": {
+        "n_seasons": 26,
+        "n_drought": 6,
+        "model": {
+          "accuracy": 0.8846153846153846,
+          "recall_drought": 0.8333333333333334,
+          "roc_auc": 0.9
+        },
+        "baseline": {
+          "accuracy": 0.8461538461538461,
+          "recall_drought": 0.3333333333333333,
+          "roc_auc": 0.875
+        },
+        "false_negatives": [
+          2017
+        ],
+        "false_positives": [
+          2005,
+          2009
+        ],
+        "by_year": [
+          {
+            "year": 2001,
+            "drought_stress": true,
+            "model_probability": 0.6720735612178932,
+            "model_calls_drought": true,
+            "baseline_probability": 0.2270290313216986,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.9449792633416438
+          },
+          {
+            "year": 2002,
+            "drought_stress": false,
+            "model_probability": 0.05226872083602912,
+            "model_calls_drought": false,
+            "baseline_probability": 0.02,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.1333779248139575
+          },
+          {
+            "year": 2003,
+            "drought_stress": true,
+            "model_probability": 0.9750673379131058,
+            "model_calls_drought": true,
+            "baseline_probability": 0.5019543813263351,
+            "baseline_calls_drought": true,
+            "cumulative_pct_of_normal": 0.748604013338332
+          },
+          {
+            "year": 2004,
+            "drought_stress": true,
+            "model_probability": 0.9054821200957168,
+            "model_calls_drought": true,
+            "baseline_probability": 0.4033876239543518,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.8190088400326059
+          },
+          {
+            "year": 2005,
+            "drought_stress": false,
+            "model_probability": 0.9913746336066531,
+            "model_calls_drought": true,
+            "baseline_probability": 0.4194002990198792,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.8075712149858005
+          },
+          {
+            "year": 2006,
+            "drought_stress": false,
+            "model_probability": 0.05482826213336274,
+            "model_calls_drought": false,
+            "baseline_probability": 0.1026814534630868,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.0337989618120809
+          },
+          {
+            "year": 2007,
+            "drought_stress": true,
+            "model_probability": 0.5330697018685164,
+            "model_calls_drought": true,
+            "baseline_probability": 0.4308292409037352,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.7994076850687606
+          },
+          {
+            "year": 2008,
+            "drought_stress": true,
+            "model_probability": 0.6305569366713258,
+            "model_calls_drought": true,
+            "baseline_probability": 0.26151569563731997,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.9203459316876286
+          },
+          {
+            "year": 2009,
+            "drought_stress": false,
+            "model_probability": 0.7567256376470024,
+            "model_calls_drought": true,
+            "baseline_probability": 0.18133084631585675,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.9776208240601023
+          },
+          {
+            "year": 2010,
+            "drought_stress": false,
+            "model_probability": 0.031288870286283375,
+            "model_calls_drought": false,
+            "baseline_probability": 0.02,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.1274130964918252
+          },
+          {
+            "year": 2011,
+            "drought_stress": false,
+            "model_probability": 0.050253256179274536,
+            "model_calls_drought": false,
+            "baseline_probability": 0.02,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.1435348609847864
+          },
+          {
+            "year": 2012,
+            "drought_stress": false,
+            "model_probability": 0.13304150513999807,
+            "model_calls_drought": false,
+            "baseline_probability": 0.02,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.4014380571257468
+          },
+          {
+            "year": 2013,
+            "drought_stress": false,
+            "model_probability": 0.04476641568747879,
+            "model_calls_drought": false,
+            "baseline_probability": 0.05039956846605635,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.0711431653813883
+          },
+          {
+            "year": 2014,
+            "drought_stress": false,
+            "model_probability": 0.0205964803757838,
+            "model_calls_drought": false,
+            "baseline_probability": 0.03186837129162105,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.0843797347916992
+          },
+          {
+            "year": 2015,
+            "drought_stress": false,
+            "model_probability": 0.0554475690688934,
+            "model_calls_drought": false,
+            "baseline_probability": 0.4498138626851985,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.7858472409391439
+          },
+          {
+            "year": 2016,
+            "drought_stress": false,
+            "model_probability": 0.033758607847564924,
+            "model_calls_drought": false,
+            "baseline_probability": 0.02,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.1715334322730737
+          },
+          {
+            "year": 2017,
+            "drought_stress": true,
+            "model_probability": 0.06094082011039112,
+            "model_calls_drought": false,
+            "baseline_probability": 0.5695406509348868,
+            "baseline_calls_drought": true,
+            "cumulative_pct_of_normal": 0.7003281064750808
+          },
+          {
+            "year": 2018,
+            "drought_stress": false,
+            "model_probability": 0.023017299298161317,
+            "model_calls_drought": false,
+            "baseline_probability": 0.02,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.2680459270352744
+          },
+          {
+            "year": 2019,
+            "drought_stress": false,
+            "model_probability": 0.022957243960941582,
+            "model_calls_drought": false,
+            "baseline_probability": 0.02,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.113505747126437
+          },
+          {
+            "year": 2020,
+            "drought_stress": false,
+            "model_probability": 0.0717207793357272,
+            "model_calls_drought": false,
+            "baseline_probability": 0.49740165684583604,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.7518559593958314
+          },
+          {
+            "year": 2021,
+            "drought_stress": false,
+            "model_probability": 0.021394948250013337,
+            "model_calls_drought": false,
+            "baseline_probability": 0.11184082459751385,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.0272565538589187
+          },
+          {
+            "year": 2022,
+            "drought_stress": false,
+            "model_probability": 0.01732243044623717,
+            "model_calls_drought": false,
+            "baseline_probability": 0.02,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.1581034164802477
+          },
+          {
+            "year": 2023,
+            "drought_stress": false,
+            "model_probability": 0.038834600635079444,
+            "model_calls_drought": false,
+            "baseline_probability": 0.3044241818239535,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.8896970129828904
+          },
+          {
+            "year": 2024,
+            "drought_stress": false,
+            "model_probability": 0.026559294502640357,
+            "model_calls_drought": false,
+            "baseline_probability": 0.2651193043920383,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.9177719254342583
+          },
+          {
+            "year": 2025,
+            "drought_stress": false,
+            "model_probability": 0.03189712953710139,
+            "model_calls_drought": false,
+            "baseline_probability": 0.02,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.2246538453809206
+          },
+          {
+            "year": 2026,
+            "drought_stress": false,
+            "model_probability": 0.02750876641587595,
+            "model_calls_drought": false,
+            "baseline_probability": 0.13566269094620043,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.0102409350384283
+          }
+        ]
+      },
+      "8": {
+        "n_seasons": 26,
+        "n_drought": 6,
+        "model": {
+          "accuracy": 0.8846153846153846,
+          "recall_drought": 0.6666666666666666,
+          "roc_auc": 0.9166666666666667
+        },
+        "baseline": {
+          "accuracy": 0.8076923076923077,
+          "recall_drought": 0.5,
+          "roc_auc": 0.8666666666666667
+        },
+        "false_negatives": [
+          2001,
+          2017
+        ],
+        "false_positives": [
+          2005
+        ],
+        "by_year": [
+          {
+            "year": 2001,
+            "drought_stress": true,
+            "model_probability": 0.3123590495983445,
+            "model_calls_drought": false,
+            "baseline_probability": 0.2093399530833253,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.9576143192261962
+          },
+          {
+            "year": 2002,
+            "drought_stress": false,
+            "model_probability": 0.028131541899917088,
+            "model_calls_drought": false,
+            "baseline_probability": 0.02,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.2557856827105598
+          },
+          {
+            "year": 2003,
+            "drought_stress": true,
+            "model_probability": 0.958424132466353,
+            "model_calls_drought": true,
+            "baseline_probability": 0.7066933326571752,
+            "baseline_calls_drought": true,
+            "cumulative_pct_of_normal": 0.6023619052448749
+          },
+          {
+            "year": 2004,
+            "drought_stress": true,
+            "model_probability": 0.6663807879474751,
+            "model_calls_drought": true,
+            "baseline_probability": 0.2983411015726679,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.8940420703052372
+          },
+          {
+            "year": 2005,
+            "drought_stress": false,
+            "model_probability": 0.988418377259942,
+            "model_calls_drought": true,
+            "baseline_probability": 0.3159961679685747,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.8814313085938752
+          },
+          {
+            "year": 2006,
+            "drought_stress": false,
+            "model_probability": 0.1906460733435711,
+            "model_calls_drought": false,
+            "baseline_probability": 0.17567625811348916,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.981659815633222
+          },
+          {
+            "year": 2007,
+            "drought_stress": true,
+            "model_probability": 0.7490963591848991,
+            "model_calls_drought": true,
+            "baseline_probability": 0.629959597756278,
+            "baseline_calls_drought": true,
+            "cumulative_pct_of_normal": 0.6571717158883729
+          },
+          {
+            "year": 2008,
+            "drought_stress": true,
+            "model_probability": 0.9364226828499752,
+            "model_calls_drought": true,
+            "baseline_probability": 0.4874661181797888,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.7589527727287223
+          },
+          {
+            "year": 2009,
+            "drought_stress": false,
+            "model_probability": 0.3186956533695,
+            "model_calls_drought": false,
+            "baseline_probability": 0.02,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.124000672686347
+          },
+          {
+            "year": 2010,
+            "drought_stress": false,
+            "model_probability": 0.0289115213311386,
+            "model_calls_drought": false,
+            "baseline_probability": 0.02,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.3410617622122218
+          },
+          {
+            "year": 2011,
+            "drought_stress": false,
+            "model_probability": 0.029081401527684597,
+            "model_calls_drought": false,
+            "baseline_probability": 0.02,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.2053606187225872
+          },
+          {
+            "year": 2012,
+            "drought_stress": false,
+            "model_probability": 0.15677597990861716,
+            "model_calls_drought": false,
+            "baseline_probability": 0.02,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.1666515497045715
+          },
+          {
+            "year": 2013,
+            "drought_stress": false,
+            "model_probability": 0.04339500554127063,
+            "model_calls_drought": false,
+            "baseline_probability": 0.16584592912894344,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.9886814791936118
+          },
+          {
+            "year": 2014,
+            "drought_stress": false,
+            "model_probability": 0.0192055737716635,
+            "model_calls_drought": false,
+            "baseline_probability": 0.02,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.18802925576751
+          },
+          {
+            "year": 2015,
+            "drought_stress": false,
+            "model_probability": 0.03544783556951294,
+            "model_calls_drought": false,
+            "baseline_probability": 0.39523162505195164,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.8248345535343202
+          },
+          {
+            "year": 2016,
+            "drought_stress": false,
+            "model_probability": 0.030286540644986138,
+            "model_calls_drought": false,
+            "baseline_probability": 0.02,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.2031504440854563
+          },
+          {
+            "year": 2017,
+            "drought_stress": true,
+            "model_probability": 0.06303330610897753,
+            "model_calls_drought": false,
+            "baseline_probability": 0.5457911225159027,
+            "baseline_calls_drought": true,
+            "cumulative_pct_of_normal": 0.7172920553457838
+          },
+          {
+            "year": 2018,
+            "drought_stress": false,
+            "model_probability": 0.019709279013113437,
+            "model_calls_drought": false,
+            "baseline_probability": 0.02,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.4287957806845917
+          },
+          {
+            "year": 2019,
+            "drought_stress": false,
+            "model_probability": 0.022957243960941582,
+            "model_calls_drought": false,
+            "baseline_probability": 0.02,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.0944637192383981
+          },
+          {
+            "year": 2020,
+            "drought_stress": false,
+            "model_probability": 0.04353089020541536,
+            "model_calls_drought": false,
+            "baseline_probability": 0.6219713817336164,
+            "baseline_calls_drought": true,
+            "cumulative_pct_of_normal": 0.6628775844759882
+          },
+          {
+            "year": 2021,
+            "drought_stress": false,
+            "model_probability": 0.01839114510282694,
+            "model_calls_drought": false,
+            "baseline_probability": 0.02,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.188878298026858
+          },
+          {
+            "year": 2022,
+            "drought_stress": false,
+            "model_probability": 0.04794135483948821,
+            "model_calls_drought": false,
+            "baseline_probability": 0.4287210936501852,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.800913504535582
+          },
+          {
+            "year": 2023,
+            "drought_stress": false,
+            "model_probability": 0.02809449678343822,
+            "model_calls_drought": false,
+            "baseline_probability": 0.18175903831434892,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.9773149726326079
+          },
+          {
+            "year": 2024,
+            "drought_stress": false,
+            "model_probability": 0.026846751081119957,
+            "model_calls_drought": false,
+            "baseline_probability": 0.2776442060966848,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.9088255670737966
+          },
+          {
+            "year": 2025,
+            "drought_stress": false,
+            "model_probability": 0.030614478558144437,
+            "model_calls_drought": false,
+            "baseline_probability": 0.02,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.607781650010211
+          },
+          {
+            "year": 2026,
+            "drought_stress": false,
+            "model_probability": 0.032206525962416126,
+            "model_calls_drought": false,
+            "baseline_probability": 0.6438734299394201,
+            "baseline_calls_drought": true,
+            "cumulative_pct_of_normal": 0.6472332643289856
+          }
+        ]
+      },
+      "21": {
+        "n_seasons": 26,
+        "n_drought": 6,
+        "model": {
+          "accuracy": 0.8461538461538461,
+          "recall_drought": 0.6666666666666666,
+          "roc_auc": 0.925
+        },
+        "baseline": {
+          "accuracy": 0.8846153846153846,
+          "recall_drought": 0.5,
+          "roc_auc": 1.0
+        },
+        "false_negatives": [
+          2007,
+          2017
+        ],
+        "false_positives": [
+          2005,
+          2006
+        ],
+        "by_year": [
+          {
+            "year": 2001,
+            "drought_stress": true,
+            "model_probability": 0.8239514304527219,
+            "model_calls_drought": true,
+            "baseline_probability": 0.34798348919489064,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.8585832220036496
+          },
+          {
+            "year": 2002,
+            "drought_stress": false,
+            "model_probability": 0.11449129352834589,
+            "model_calls_drought": false,
+            "baseline_probability": 0.17015065778648922,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.9856066730096505
+          },
+          {
+            "year": 2003,
+            "drought_stress": true,
+            "model_probability": 0.9726027648964695,
+            "model_calls_drought": true,
+            "baseline_probability": 0.53089059191002,
+            "baseline_calls_drought": true,
+            "cumulative_pct_of_normal": 0.7279352914928429
+          },
+          {
+            "year": 2004,
+            "drought_stress": true,
+            "model_probability": 0.9515138403889342,
+            "model_calls_drought": true,
+            "baseline_probability": 0.5242563455912046,
+            "baseline_calls_drought": true,
+            "cumulative_pct_of_normal": 0.7326740388634253
+          },
+          {
+            "year": 2005,
+            "drought_stress": false,
+            "model_probability": 0.9598758520794768,
+            "model_calls_drought": true,
+            "baseline_probability": 0.2864572884627268,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.9025305082409094
+          },
+          {
+            "year": 2006,
+            "drought_stress": false,
+            "model_probability": 0.6823608717702242,
+            "model_calls_drought": true,
+            "baseline_probability": 0.2916283635084581,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.8988368832082442
+          },
+          {
+            "year": 2007,
+            "drought_stress": true,
+            "model_probability": 0.25796219150651967,
+            "model_calls_drought": false,
+            "baseline_probability": 0.3643838410671425,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.846868684952041
+          },
+          {
+            "year": 2008,
+            "drought_stress": true,
+            "model_probability": 0.7949180947748392,
+            "model_calls_drought": true,
+            "baseline_probability": 0.37056231680594937,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.8424554879957504
+          },
+          {
+            "year": 2009,
+            "drought_stress": false,
+            "model_probability": 0.11918995861775426,
+            "model_calls_drought": false,
+            "baseline_probability": 0.02,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.1079406606675675
+          },
+          {
+            "year": 2010,
+            "drought_stress": false,
+            "model_probability": 0.01672121633979107,
+            "model_calls_drought": false,
+            "baseline_probability": 0.15296591063619658,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.9978814924027167
+          },
+          {
+            "year": 2011,
+            "drought_stress": false,
+            "model_probability": 0.03696332443382067,
+            "model_calls_drought": false,
+            "baseline_probability": 0.02,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.2500090331625464
+          },
+          {
+            "year": 2012,
+            "drought_stress": false,
+            "model_probability": 0.04802011429470342,
+            "model_calls_drought": false,
+            "baseline_probability": 0.02,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.171394674146941
+          },
+          {
+            "year": 2013,
+            "drought_stress": false,
+            "model_probability": 0.0174582048199509,
+            "model_calls_drought": false,
+            "baseline_probability": 0.02,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.1125701496686011
+          },
+          {
+            "year": 2014,
+            "drought_stress": false,
+            "model_probability": 0.014560778028176834,
+            "model_calls_drought": false,
+            "baseline_probability": 0.02,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.1054389175825756
+          },
+          {
+            "year": 2015,
+            "drought_stress": false,
+            "model_probability": 0.01832840398799084,
+            "model_calls_drought": false,
+            "baseline_probability": 0.17041090794631886,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.9854207800383437
+          },
+          {
+            "year": 2016,
+            "drought_stress": false,
+            "model_probability": 0.016020639154025868,
+            "model_calls_drought": false,
+            "baseline_probability": 0.02,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.2172325191985678
+          },
+          {
+            "year": 2017,
+            "drought_stress": true,
+            "model_probability": 0.06700101088274726,
+            "model_calls_drought": false,
+            "baseline_probability": 0.5303803520203987,
+            "baseline_calls_drought": true,
+            "cumulative_pct_of_normal": 0.7282997485568581
+          },
+          {
+            "year": 2018,
+            "drought_stress": false,
+            "model_probability": 0.01610302573629237,
+            "model_calls_drought": false,
+            "baseline_probability": 0.02,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.1042507575666833
+          },
+          {
+            "year": 2019,
+            "drought_stress": false,
+            "model_probability": 0.016205588919828286,
+            "model_calls_drought": false,
+            "baseline_probability": 0.11898264449390118,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.0221552539329277
+          },
+          {
+            "year": 2020,
+            "drought_stress": false,
+            "model_probability": 0.010019308030398522,
+            "model_calls_drought": false,
+            "baseline_probability": 0.21866624912781207,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.95095267919442
+          },
+          {
+            "year": 2021,
+            "drought_stress": false,
+            "model_probability": 0.017810101676291924,
+            "model_calls_drought": false,
+            "baseline_probability": 0.15322640672191903,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 0.9976954237700578
+          },
+          {
+            "year": 2022,
+            "drought_stress": false,
+            "model_probability": 0.016982900680512638,
+            "model_calls_drought": false,
+            "baseline_probability": 0.02,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.1492260106494026
+          },
+          {
+            "year": 2023,
+            "drought_stress": false,
+            "model_probability": 0.01581396099004867,
+            "model_calls_drought": false,
+            "baseline_probability": 0.13498267121129642,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.0107266634205025
+          },
+          {
+            "year": 2024,
+            "drought_stress": false,
+            "model_probability": 0.015420783548821319,
+            "model_calls_drought": false,
+            "baseline_probability": 0.058071556881214764,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.0656631736562752
+          },
+          {
+            "year": 2025,
+            "drought_stress": false,
+            "model_probability": 0.020153488483939486,
+            "model_calls_drought": false,
+            "baseline_probability": 0.02,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.2171063711031664
+          },
+          {
+            "year": 2026,
+            "drought_stress": false,
+            "model_probability": 0.015217289907180812,
+            "model_calls_drought": false,
+            "baseline_probability": 0.10444870462607914,
+            "baseline_calls_drought": false,
+            "cumulative_pct_of_normal": 1.0325366395528006
+          }
+        ]
+      }
+    },
+    "small_sample_note": "The independent sample is about 26 seasons, and only 6 of them are proxy-drought seasons. Accuracy, recall, and ROC-AUC will move a lot if one year is added or removed. Do not read week-rows as extra samples: weeks inside one season share one label. Week 21 uses nearly the whole season's rain, which is also what the label is built from, so it is not an early-warning result. No threshold or hyperparameter was adjusted after seeing these numbers."
+  }
+}

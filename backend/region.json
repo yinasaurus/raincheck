@@ -1,0 +1,23 @@
+{
+  "name": "Nueva Ecija",
+  "country": "Philippines",
+  "latitude": 15.58,
+  "longitude": 121.0,
+  "timezone": "Asia/Manila",
+  "crop": "rice",
+  "season_name": "wet_season",
+  "planting_season_months": [6, 7, 8, 9, 10],
+  "drought_label": {
+    "method": "seasonal_spi_gamma",
+    "threshold": -1.0,
+    "definition": "A complete wet season is labeled drought/stress when its seasonal SPI is at or below -1.0 (WMO moderate drought or worse). SPI here is the normal quantile of a two-parameter gamma distribution fit by method of moments to historical June-October rainfall totals at this grid point. This is a rainfall proxy, not a measured yield loss."
+  },
+  "trigger": {
+    "rainfall_mm": null,
+    "pct_of_long_term_average": 0.8,
+    "window": "full_planting_season",
+    "comparison": "strictly_below"
+  },
+  "heat_day_celsius": 35.0,
+  "history_start": "2001-01-01"
+}
