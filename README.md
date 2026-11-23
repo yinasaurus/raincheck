@@ -80,7 +80,9 @@ The Python rule also caps relief, so the contract can follow the same checks:
 
 The running cap on reductions is a choice to confirm before Phase 2. The brief caps each reduction and caps deferral both per call and in total. The running reduction cap stops a 30% term from being applied over and over.
 
-## The model
+## The model (v1, kept for comparison)
+
+This section is the original classifier. It is still served as `risk_score`. An audit showed that it does not answer the question the contract asks, so the payment-line score below is a separate field. v1 was not deleted and was not retuned.
 
 Inputs at each full week of the season (21 weeks; the last 6 days of October are in the rainfall total and are not a model row):
 
@@ -105,7 +107,7 @@ Leave-one-season-out. Each number below is one season, scored once, by a model t
 | Week 12 (headline) | 0.885 (23/26) | 0.833 (5/6) | 0.900 | 0.846 (22/26) | 0.333 (2/6) | 0.875 |
 | Week 21 | 0.846 (22/26) | 0.667 (4/6) | 0.925 | 0.885 (23/26) | 0.500 (3/6) | 1.000 |
 
-Week 12 is the early-warning number. Week 21 uses almost the whole season's rain, which is also what the label is built from. At that point the baseline ranks every season correctly (ROC-AUC 1) and is more accurate than the model.
+Week 12 is the checkpoint used for this comparison. Week 21 uses almost the whole season's rain, which is also what the label is built from. At that point the baseline ranks every season correctly (ROC-AUC 1) and is more accurate than the model.
 
 At week 12 the model missed **2017**, one of the three driest seasons (rainfall already about 70% of normal by week 12; held-out probability about 0.06 all season). It raised false alarms for **2005** and **2009**. The 75% rule catches 2017 and misses the milder seasons. Full rows are in `backend/models/metrics.json`.
 
@@ -113,7 +115,85 @@ Historical replays use those held-out probabilities (`backend/models/loo_scores.
 
 Local reasons are one-at-a-time swaps against the training median. They are not SHAP values, and they do not add up to the probability.
 
-Plain-language text is a template. No language-model API is called.
+The original plain-language paragraph is still `explanation`. It is a template. No language-model API is required.
+
+## Payment-line probability, added after the audit
+
+This change was made after the audit, not before it. v1 predicts an SPI proxy (`SPI <= -1`). That label is not the payment rule. On this cache it flags seasons that finished above 1,363.0 mm, and the held-out score for 2017 stays near 0.06 at week 12 while the rainfall line fires. Dropping the temperature features made that classifier worse, not better (mean Brier 0.178 against the payment line, versus 0.160 with temperature). v1 does not beat the percent-of-normal rule on the quantity the contract uses.
+
+The new score is `p_relief`: the probability that June–October rainfall ends strictly below 1,363.0 mm (13,630 tenths), given rain observed through week w. SPI is not an input. Temperature is not an input for the new candidates. The score is advisory. Observed rainfall decides, and the score is not passed to the oracle.
+
+`p_relief` is a probabilistic projection. The chosen method resamples the other seasons' remaining rainfall and asks how often that remainder would finish below the line. It is analog resampling, not deep learning. On this sample its skill against climatology is small at weeks 4 and 8 (about 0.12 and 0.16) and shows up mainly from about week 12 (about 0.39). Week 21 has six days left, so a Brier score near 0 there means the season total is already known.
+
+Only 3 of 26 seasons end below the line: 2003, 2004 and 2017. The bootstrap intervals below describe this sample. They are not a significance test.
+
+Selection rule, written down before looking at individual years: lowest mean Brier score across weeks 4, 8, 12, 16 and 21. A gap of 0.005 or less is a tie, broken by simplicity (rule, then logistic, analog raw, analog scaled, lognormal, gamma, v1 without temperature, v1). The winner was chosen from these 8 candidates on the same 26 seasons, 3 of them positive, so its score is optimistically biased. The headline number is the mean Brier on weeks 4, 8, 12 and 16, leaving week 21 out. The mean that includes week 21 is the one the selection rule used.
+
+Climatology is the no-skill reference, not a ninth candidate. For each held-out season it predicts (positives among the other seasons) / 25, the same number at every week: 2/25 when the held-out year is a relief year, and 3/25 otherwise. Its Brier score is 0.110 at every checkpoint. Brier skill is `1 - model_brier / climatology_brier`.
+
+| Candidate | Mean Brier, no week 21 | Mean Brier, with week 21 | False alarms | 2003 / 2004 / 2017 first week at or above 0.5 |
+| --- | --- | --- | --- | --- |
+| Analog, raw remainder | 0.082 | 0.065 | 1 | 18 / 19 / 14 |
+| Lognormal remainder | 0.084 | 0.067 | 1 | 16 / 19 / 14 |
+| Gamma remainder | 0.084 | 0.067 | 1 | 17 / 19 / 15 |
+| Rule, percent of normal | 0.095 | 0.087 | 13 | 2 / 20 / 6 |
+| Analog, scaled remainder | 0.115 | 0.092 | 15 | 1 / 7 / 6 |
+| Logistic, one feature per week | 0.108 | 0.108 | 0 | none / none / none |
+| v1, SPI classifier | 0.165 | 0.160 | 9 | 1 / 3 / 1 |
+| v1 without temperature | 0.201 | 0.178 | 18 | 1 / 3 / 1 |
+| Climatology (not a candidate) | 0.110 | 0.110 | 0 | none / none / none |
+
+| Candidate | W4 Brier | W4 skill | W8 Brier | W8 skill | W12 Brier | W12 skill | W16 Brier | W16 skill | W21 Brier | W21 skill |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Analog, raw remainder | 0.098 | 0.12 | 0.093 | 0.16 | 0.067 | 0.39 | 0.069 | 0.37 | 0.000 | 1.00 |
+| Lognormal remainder | 0.100 | 0.10 | 0.091 | 0.17 | 0.072 | 0.35 | 0.072 | 0.35 | 0.000 | 1.00 |
+| Gamma remainder | 0.100 | 0.09 | 0.091 | 0.17 | 0.073 | 0.34 | 0.070 | 0.36 | 0.000 | 1.00 |
+| Rule, percent of normal | 0.118 | -0.07 | 0.111 | -0.00 | 0.076 | 0.32 | 0.075 | 0.32 | 0.055 | 0.50 |
+| Analog, scaled remainder | 0.155 | -0.40 | 0.156 | -0.41 | 0.070 | 0.37 | 0.078 | 0.29 | 0.000 | 1.00 |
+| Logistic, one feature per week | 0.108 | 0.02 | 0.108 | 0.02 | 0.108 | 0.02 | 0.109 | 0.02 | 0.108 | 0.03 |
+| v1, SPI classifier | 0.217 | -0.97 | 0.142 | -0.28 | 0.139 | -0.26 | 0.162 | -0.47 | 0.141 | -0.28 |
+| v1 without temperature | 0.244 | -1.21 | 0.225 | -1.04 | 0.167 | -0.51 | 0.167 | -0.52 | 0.086 | 0.22 |
+| Climatology | 0.110 | 0.00 | 0.110 | 0.00 | 0.110 | 0.00 | 0.110 | 0.00 | 0.110 | 0.00 |
+
+The analog with raw remainders wins. Its headline mean Brier, without week 21, is 0.082, against 0.095 for the rule and 0.110 for climatology. Including week 21, the same analog is 0.065 and the rule is 0.087. Lognormal and gamma are within 0.005 of the analog on the selection mean, so the tie goes to the simpler analog. The logistic never reaches 0.5, which is why it has no false alarms and also misses every relief year. v1's week-1 score for 2017 is about 0.74; by week 12 the held-out score is about 0.06. That is the miss.
+
+A bootstrap of the 26 leave-one-out season scores gives a 95% interval of about 0.015 to 0.128 for the analog and 0.052 to 0.126 for the rule. The intervals overlap. Do not read the lower point estimate as a significant win.
+
+Week-12 ROC-AUC for the analog is 0.93. The same number for the rule is 0.94. The analog's advantage on this sample is calibration of the probability, not a sharper ranking at mid-season.
+
+Calibration of the analog, five bins, checkpoints pooled (130 scores). Most scores sit near 0 because 23 seasons finish above the line. Bins above 0.4 have 2 or 3 scores. Do not treat those rows as a calibration curve.
+
+| Predicted bin | Count | Mean predicted | Share that finished below the line |
+| --- | --- | --- | --- |
+| 0.0–0.2 | 107 | 0.03 | 0.04 |
+| 0.2–0.4 | 16 | 0.26 | 0.31 |
+| 0.4–0.6 | 2 | 0.46 | 1.00 |
+| 0.6–0.8 | 2 | 0.72 | 0.50 |
+| 0.8–1.0 | 3 | 0.96 | 1.00 |
+
+`p_relief` for a past year is leave-one-season-out: that year's remainder is not in the analog pool, and its rain is not in the normal. `projected_total_mm` is the 10th, 50th and 90th percentile of the other seasons' remainders added to rain so far. `GET /api/risk` and `POST /api/simulate` add these fields and leave the old ones in place. `risk_score` and `baseline_score` stay in the JSON and are marked deprecated in the OpenAPI schema; use `p_relief` and `rule_score`. `GET /api/backtest` includes the climatology Brier scores and the skill scores under `metadata`. `explanations.en` and `explanations.fil` are templates filled only with those numbers. The Filipino text needs review by a native speaker. If `LLM_API_KEY` is set, the provider named by `LLM_PROVIDER` (default `openai`) rephrases the English sentence with the model in `LLM_MODEL`. Any new number is rejected and the template is kept. With no key, the template is the whole explanation. No key is stored in the repo.
+
+### 2018–2026
+
+Percent of normal here is the 26-year mean, including the year itself. `p_relief` is still leave-one-out.
+
+| Year | Season total | Share of the 26-year mean | Below 1,363.0 mm | Highest p_relief | First week at or above 0.5 |
+| --- | --- | --- | --- | --- | --- |
+| 2018 | 1,914.9 mm | 112% | no | 0.12 | none |
+| 2019 | 1,731.1 | 102% | no | 0.12 | none |
+| 2020 | 1,653.8 | 97% | no | 0.72 | 14 |
+| 2021 | 1,673.9 | 98% | no | 0.12 | none |
+| 2022 | 2,064.2 | 121% | no | 0.16 | none |
+| 2023 | 1,706.1 | 100% | no | 0.12 | none |
+| 2024 | 1,811.8 | 106% | no | 0.16 | none |
+| 2025 | 2,047.3 | 120% | no | 0.12 | none |
+| 2026 | 1,731.2 | 102% | no | 0.28 | none |
+
+2020 is the one false alarm: week 14 reached 0.72 and the season finished at 1,653.8 mm.
+
+A linear fit to the 26 season totals slopes upward by about 16 mm per year. The regression p-value is about 0.011. That is reported, and it is not a claim that rainfall is increasing. Ten seasons move the line. The 10-year rolling means and the counts below the line are on `GET /api/backtest`. Seasons below the line: 2 of 10 in 2001–2010, 1 of 10 in 2011–2020, 0 of 6 in 2021–2026.
+
+A dry day is under 1 mm. The longest spells in the three relief years were 13, 15 and 7 days (median 13). No season from 2018 through 2026 both finished above the line and had a spell that long. The longest in that stretch is 10 days, in 2018. The limitation remains: a season-total trigger can miss a damaging dry spell. This check does not add a trigger and does not change the oracle.
 
 ## Run it
 
@@ -143,12 +223,23 @@ python3.11 -m venv .venv
 
 Then open `http://127.0.0.1:8000/docs`.
 
+The farmer and lender screens are in `frontend/`. From that folder:
+
+```powershell
+npm install
+npm run dev
+```
+
+The dev server is `http://127.0.0.1:5173`. It reads `VITE_API_URL`, which defaults to `http://127.0.0.1:8000`. `GET /api/schedule/preview` is a what-if payment sketch. It does not call the chain.
+
 | Endpoint | Role |
 | --- | --- |
 | `GET /api/region` | Place, crop, season, proposed 1,363 mm strike, each season's rainfall, SPI, and proxy label |
 | `GET /api/weather/observed?from=2015-06-01&to=2015-10-31&resolution=weekly` | Cached observations. `resolution` is `daily`, `weekly`, or `monthly` |
-| `GET /api/risk` | Latest season: held-out score when one exists, band, reasons, template explanation, whether the 1,363 mm line was crossed |
-| `POST /api/simulate` with `{"year": 2004}` | That season, week by week |
+| `GET /api/risk` | Latest season: `p_relief`, `rule_score`, band, reasons, template explanation, whether the 1,363 mm line was crossed. `risk_score` and `baseline_score` are deprecated |
+| `POST /api/simulate` with `{"year": 2004}` | That season, week by week, plus `p_relief` and the projected-total band |
+| `GET /api/backtest` | All 26 seasons, leave-one-out `p_relief`, climatology Brier, Brier skill, and the rainfall trend |
+| `GET /api/demo/years` | 2004 and 2017 (relief) and 2020 (model false alarm, no relief), each with its weekly `p_relief` series |
 | `POST /api/loans` | Create a loan. Defaults: trigger 13,630 tenths (1,363.0 mm), 1,200 bps, 24 months, max reduction 5,000 bps, max deferral 4 months |
 | `GET /api/loans/{id}` | On-chain loan, relief history, and the before/after schedule |
 | `POST /api/oracle/check/{id}?season=2017` | June–October daily rainfall from the cache. Relief only if that total is strictly below the loan trigger |
@@ -181,12 +272,32 @@ macOS or Linux:
 ./scripts/dev.sh
 ```
 
-The script starts Hardhat, deploys `LoanRelief`, and serves the API. Hardhat's accounts and keys are written to `contracts/node.log` and are not printed in the window. That log is gitignored. The oracle key in the script is Hardhat's published account #1. It only has coins on a fresh local node.
+The script starts Hardhat, deploys `LoanRelief`, and serves the API and the farmer/lender screen. Closing it stops all three. Hardhat's accounts and keys are written to `contracts/node.log` and are not printed in the window. That log is gitignored. The oracle key in the script is Hardhat's published account #1. It only has coins on a fresh local node. If port 8545 is already open, the script stops instead of starting a second node. If port 5173 is already open, it prints the screen URL and leaves that process alone.
 
 ```
-API docs  http://127.0.0.1:8000/docs
+Frontend  http://127.0.0.1:5173
+API       http://127.0.0.1:8000
 RPC       http://127.0.0.1:8545
 ```
+
+## Screens
+
+Open `http://127.0.0.1:5173`. English and Filipino use the same dictionary keys. The Filipino file is marked for review by a native speaker.
+
+The farmer screen has the three replay seasons (2004, 2017, 2020), week-by-week playback, rainfall so far against the normal, the projected season total against the 1,363.0 mm line, and the estimated chance of relief marked advisory only. At the end of the replay it states whether the next payments are lower or whether there is no relief. The example loan is PHP 100,000. A rainfall slider labelled simulation asks the schedule preview what would change. "See the public record" opens the lender screen for that loan.
+
+The lender screen shows the loan terms and caps, the relief history, the transaction hash and the evidence hash with copy buttons, and Verify, which says Match or Mismatch. It also shows the model estimate beside the rule and the measured rainfall, the 26-season table, the rainfall trend with the payment line and the 10-year mean, and the model comparison. The note that only 3 of 26 seasons fell below the line sits on the table and again directly above the comparison.
+
+The limits panel is open on the first visit and one click away after that. It stays in farmer language in both screens: a public record cannot prove the weather report, weather at the map point is not the farm, local test chain only, the drought mark is a proxy and only 3 of 26 seasons ended below the line, estimates are weak before about week 12, a season total can miss a dry spell, drought only, and this is a prototype and not a regulated product.
+
+Screenshots of those screens, at 390 px and 1,280 px, are in `docs/screenshots/`.
+
+## Three-minute demo
+
+1. Open `http://127.0.0.1:5173`. The limits panel is open. Leave it, or hide it.
+2. Choose 2004 and press Run this season. Move the week control to 21. The season ended at 1,243.9 mm, under the 1,363.0 mm line. The banner says "Your next 3 payments are 30% lower." The example loan shows this month's payment, month 4, as 4,707.35 before and 3,295.14 after. Total repaid is 112,976.34 before and 113,436.80 after, which is 460.46 more, and the loan still ends at month 24.
+3. Choose 2020 and run it. At week 21 the banner says "No relief this season: rainfall was above the payment line." The season finished at 1,653.8 mm. The same screen says relief depends only on the final measured rainfall, not on the estimate. Earlier in that season the model had been worried. The measured total still finished above the line.
+4. Press See the public record. The lender screen shows the loan terms, the transaction hash, and the evidence hash. Press Verify. The result says Match. The panel beside it explains 2017, which finished at 1,239.1 mm so relief applies, and 2020, which reached an estimate of 0.5 at week 14 and finished at 1,653.8 mm with no relief.
 
 ```powershell
 Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/api/demo/run -ContentType "application/json" -Body '{"year":2004}'
@@ -257,7 +368,8 @@ The API maps each history row with `relief_from_history_row`. The first event st
 - The local contract can prove what was written down. It cannot prove the weather feed was true. The backend key is the oracle, so this demo does not solve the oracle problem. Open-Meteo is the source (CC-BY 4.0; attribute Open-Meteo).
 - The SPI flag is a rainfall proxy. It is not a measured crop loss, and it is not the official index from a meteorological service.
 - This is a prototype. It is not a regulated loan, and it does not move money.
-- Twenty-six seasons and six proxy droughts are a small sample. The week-12 scores will move if the record grows. The model can miss a severe dry season, as it did for 2017 when that year was held out.
+- Twenty-six seasons and six proxy droughts are a small sample. The week-12 v1 scores will move if the record grows. v1 missed 2017. The payment-line score has only three seasons below 1,363.0 mm, and its bootstrap interval overlaps the rule's.
+- A season-total trigger can miss a damaging dry spell inside a season that still finishes above the line.
 
 ## Tests
 

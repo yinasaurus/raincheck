@@ -9,6 +9,7 @@ import joblib
 import pandas as pd
 
 from app.explanations import explain_risk, risk_band
+from app.relief_text import explain_pair
 from data.aggregate import (
     aggregate_monthly,
     aggregate_weekly,
@@ -18,7 +19,7 @@ from data.aggregate import (
     season_totals,
     season_week_buckets,
 )
-from data.paths import DAILY_CSV, LOO_SCORES_PATH, METRICS_PATH, MODEL_PATH, REGION_PATH
+from data.paths import DAILY_CSV, LOO_SCORES_PATH, METRICS_PATH, MODEL_PATH, REGION_PATH, RELIEF_PATH
 from data.trigger import agreed_trigger_mm, round_mm, trigger_fires
 from ml.baseline import baseline_probability
 from ml.explain import positive_probability, top_factors
@@ -30,6 +31,38 @@ LIMITATIONS = [
     "Weather at this grid point is not the same as weather on one farm (basis risk).",
     "This is a prototype and a simulation. It is not a regulated lending product.",
 ]
+
+
+def _comparison_metadata(report: dict) -> dict:
+    """Climatology Brier, skill scores, and both mean Brier figures. Not a significance test."""
+    candidates = report.get("candidates") or {}
+    climate = candidates.get("climatology") or {}
+    by_week = climate.get("by_week") or {}
+    skill = {}
+    without = {}
+    with_week_21 = {}
+    for name, cand in candidates.items():
+        if name == "climatology":
+            continue
+        skill[name] = {
+            week: (row.get("brier_skill") if isinstance(row, dict) else None)
+            for week, row in (cand.get("by_week") or {}).items()
+        }
+        without[name] = cand.get("mean_brier_without_week_21")
+        with_week_21[name] = cand.get("mean_brier_with_week_21", cand.get("mean_brier"))
+    return {
+        "headline_metric": report.get("headline_metric", "mean_brier_without_week_21"),
+        "brier_skill_definition": "1 - model_brier / climatology_brier",
+        "climatology": (
+            "Leave-one-out rate: positives among the other seasons, divided by 25. "
+            "The same probability is used at every week. It is not one of the 8 candidates."
+        ),
+        "climatology_brier_by_week": {week: row.get("brier") for week, row in by_week.items()},
+        "mean_brier_without_week_21": without,
+        "mean_brier_with_week_21": with_week_21,
+        "brier_skill_by_week": skill,
+        "selection_bias": report.get("selection_bias"),
+    }
 
 
 class NotReady(RuntimeError):
@@ -53,6 +86,7 @@ class RainCheckService:
         self.loo_scores = {}
         if LOO_SCORES_PATH.exists():
             self.loo_scores = json.loads(LOO_SCORES_PATH.read_text(encoding="utf-8")).get("scores", {})
+        self.relief = json.loads(RELIEF_PATH.read_text(encoding="utf-8")) if RELIEF_PATH.exists() else None
         self.labeled = None
         self.labels: dict[int, bool] = {}
         self.buckets: dict[int, pd.DataFrame] = {}
@@ -278,6 +312,7 @@ class RainCheckService:
         carried_baseline = None
         carried_source = None
         carried_factors: list[dict] = []
+        last_relief_week = None
         cumulative = 0.0
         for bucket in buckets.itertuples():
             rainfall = 0.0 if pd.isna(bucket.precipitation_mm) else float(bucket.precipitation_mm)
@@ -299,6 +334,9 @@ class RainCheckService:
                 factors = carried_factors
                 carried = carried_score is not None
             is_last = week_index == int(buckets["week_index"].max())
+            if not carried:
+                last_relief_week = week_index
+            relief = self._relief_public(year, last_relief_week, carried=carried)
             weeks.append(
                 {
                     "week_index": week_index,
@@ -315,6 +353,8 @@ class RainCheckService:
                     "top_factors": factors,
                     "trigger_fired": bool(fired and is_last and season_complete),
                     "trigger_pending": not (is_last and season_complete),
+                    **relief,
+                    "explanations": self._relief_explanation(year, last_relief_week),
                 }
             )
         label = None
@@ -344,6 +384,7 @@ class RainCheckService:
                 "rule": "Fired only on the last step, and only if full-season observed rainfall is strictly below the trigger.",
             },
             "weeks": weeks,
+            **self._relief_public(year, last_relief_week, carried=False, note=True),
             "disclaimer": (
                 "Replay of historical weather. The drought flag is a rainfall proxy (SPI), "
                 "not a record of crop failure. The trigger uses the pre-agreed rainfall rule, "
@@ -386,6 +427,115 @@ class RainCheckService:
         score = float(positive_probability(self.bundle["model"], frame)[0])
         factors = top_factors(self.bundle["model"], row, self.bundle["medians"], columns, limit=3)
         return score, factors
+
+    def _relief_public(self, year: int | None, week: int | None, carried: bool, note: bool = False) -> dict:
+        """Additive payment-line fields. None when this week was not scored."""
+        record = None
+        if self.relief is not None and year is not None and week is not None:
+            record = (self.relief.get("scores") or {}).get(str(year), {}).get(str(int(week)))
+        method = None if self.relief is None else self.relief.get("method")
+        fields = {
+            "p_relief": None if record is None else record.get("p_relief"),
+            "projected_total_mm": None if record is None else record.get("projected_total_mm"),
+            "rule_score": None if record is None else record.get("rule_score"),
+            "rain_pct_of_normal": None if record is None else record.get("rain_pct_of_normal"),
+            "p_relief_method": None if record is None else record.get("method", method),
+            "projection_method": None if record is None else record.get("projection_method"),
+            "p_relief_carried_forward": bool(carried and record is not None),
+        }
+        if note:
+            fields["p_relief_note"] = None if self.relief is None else self.relief.get("small_sample_note")
+        return fields
+
+    def _relief_explanation(self, year: int, week: int | None) -> dict:
+        if week is None or self.relief is None:
+            return explain_pair(None)
+        record = (self.relief.get("scores") or {}).get(str(year), {}).get(str(int(week)))
+        if not record or record.get("p_relief") is None or record.get("projected_total_mm") is None:
+            return explain_pair(None)
+        return explain_pair(
+            {
+                "week": int(week),
+                "rain_pct_of_normal": round(float(record["rain_pct_of_normal"]) * 100, 1),
+                "p_relief": float(record["p_relief"]),
+                "projected_total_mm": record["projected_total_mm"],
+                "payment_line_mm": 1363.0,
+            }
+        )
+
+    def backtest(self) -> dict:
+        """Leave-one-out payment-line scores for every cached season. Not a significance test."""
+        if self.relief is None:
+            raise NotReady("Relief scores are missing. From backend/, run: python -m ml.relief_run")
+        report = self.relief
+        fired = {int(year) for year in report.get("positive_seasons") or []}
+        totals = {int(row["year"]): row["season_total_mm"] for row in report["trend"]["season_totals_mm"]}
+        rows = []
+        for year_text, weeks in sorted(report["scores"].items(), key=lambda item: int(item[0])):
+            year = int(year_text)
+            first = None
+            for week_text in sorted(weeks, key=int):
+                if float(weeks[week_text]["p_relief"]) >= 0.5:
+                    first = int(week_text)
+                    break
+            relief = year in fired
+            rows.append(
+                {
+                    "year": year,
+                    "season_total_mm": totals.get(year),
+                    "relief_fired": relief,
+                    "p_relief": {week: weeks[week]["p_relief"] for week in ("4", "8", "12", "16", "21")},
+                    "first_week_p_relief_at_least_0_5": first,
+                    "false_alarm": (not relief) and first is not None,
+                }
+            )
+        return {
+            "method": report.get("method"),
+            "projection_method": report.get("projection_method"),
+            "payment_line_mm": report.get("payment_line_mm"),
+            "n_seasons": len(rows),
+            "n_positive_seasons": report.get("n_positive_seasons"),
+            "positive_seasons": report.get("positive_seasons"),
+            "small_sample_note": report.get("small_sample_note"),
+            "beats_rule_baseline": report.get("beats_rule_baseline"),
+            "rows": rows,
+            "trend": {
+                "linear_trend_mm_per_year": report["trend"]["linear_trend_mm_per_year"],
+                "linear_trend_p_value": report["trend"]["linear_trend_p_value"],
+                "trend_note": report["trend"]["trend_note"],
+                "rolling_10_year_mean_mm": report["trend"]["rolling_10_year_mean_mm"],
+                "below_the_line_by_window": report["trend"]["below_the_line_by_window"],
+                "season_totals_mm": report["trend"]["season_totals_mm"],
+            },
+            "dry_spell_limitation": report.get("dry_spells"),
+            "newer_years": report.get("newer_years"),
+            "candidates": report.get("candidates"),
+            "calibration": report.get("calibration"),
+            "lead_time": report.get("lead_time"),
+            "metadata": _comparison_metadata(report),
+            "limitations": LIMITATIONS,
+        }
+
+    def demo_years(self) -> dict:
+        """Recommended replay years and the weekly p_relief series for each. No chain call."""
+        if self.relief is None:
+            raise NotReady("Relief scores are missing. From backend/, run: python -m ml.relief_run")
+        roles = (
+            (2004, "relief"),
+            (2017, "relief"),
+            (2020, "model false alarm, no relief"),
+        )
+        years = []
+        for year, role in roles:
+            weeks = self.relief["scores"].get(str(year))
+            if not weeks:
+                raise SeasonNotFound(f"No relief scores for {year}.")
+            series = [
+                {"week": int(week), "p_relief": weeks[week]["p_relief"]}
+                for week in sorted(weeks, key=int)
+            ]
+            years.append({"year": year, "role": role, "p_relief_by_week": series})
+        return {"years": years}
 
     def _season_row(self, year: int) -> dict | None:
         matched = self.labeled[self.labeled["year"] == year]
@@ -492,6 +642,16 @@ class RainCheckService:
                 ),
             },
             "evaluation": headline,
+            **self._relief_public(
+                year,
+                None if scored_week is None or score is None else int(scored_week["week_index"]),
+                carried=False,
+                note=True,
+            ),
+            "explanations": self._relief_explanation(
+                year,
+                None if scored_week is None or score is None else int(scored_week["week_index"]),
+            ),
             "limitations": LIMITATIONS,
             "generated_at": datetime.now(timezone.utc).isoformat(),
         }

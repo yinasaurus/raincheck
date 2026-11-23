@@ -210,6 +210,13 @@ def demo_run(body: DemoBody, client: LoanReliefClient = Depends(get_client), ser
         "oracle": _oracle_body(result),
         **_schedules(loan, history, body.year),
         "comparison_note": COMPARISON_NOTE,
+        # The relief the demo offers when rainfall is below the line. Not an oracle input.
+        "example_relief": {
+            "kind": "REDUCTION",
+            "value": 3000,
+            "start_month": DEFAULT_RELIEF_START_MONTH,
+            "window_months": 3,
+        },
     }
 
 

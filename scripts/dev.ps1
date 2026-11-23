@@ -1,9 +1,10 @@
-# Start a local Hardhat node, deploy LoanRelief, and serve the API.
-# Closing this window stops the API and kills the node.
+# Start a local Hardhat node, deploy LoanRelief, and serve the API and the frontend.
+# Closing this window stops the API and kills the node and the frontend.
 $ErrorActionPreference = "Stop"
 $Root = Resolve-Path (Join-Path $PSScriptRoot "..")
 $Contracts = Join-Path $Root "contracts"
 $Backend = Join-Path $Root "backend"
+$Frontend = Join-Path $Root "frontend"
 $Python = Join-Path $Backend ".venv\Scripts\python.exe"
 
 if (-not (Test-Path $Python)) {
@@ -31,6 +32,7 @@ $Node = Start-Process -FilePath "cmd.exe" `
     -PassThru `
     -WindowStyle Hidden
 
+$Web = $null
 try {
     $ready = $false
     for ($i = 0; $i -lt 60; $i++) {
@@ -56,15 +58,24 @@ try {
     $env:ORACLE_PRIVATE_KEY = "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
     $env:DEPLOYMENT_PATH = Join-Path $Backend "chain\deployment.json"
 
+    $Web = Start-Process -FilePath "cmd.exe" `
+        -ArgumentList "/c", "npm run dev" `
+        -WorkingDirectory $Frontend `
+        -PassThru `
+        -WindowStyle Hidden
+
     Write-Host ""
-    Write-Host "API docs  http://127.0.0.1:8000/docs"
+    Write-Host "Frontend  http://127.0.0.1:5173"
+    Write-Host "API       http://127.0.0.1:8000"
     Write-Host "RPC       http://127.0.0.1:8545"
-    Write-Host "Demo      POST http://127.0.0.1:8000/api/demo/run  {`"year`": 2004}"
     Write-Host ""
 
     Push-Location $Backend
     & $Python -m uvicorn app.main:app --port 8000
 } finally {
+    if ($Web -and -not $Web.HasExited) {
+        taskkill /T /F /PID $Web.Id | Out-Null
+    }
     if ($Node -and -not $Node.HasExited) {
         taskkill /T /F /PID $Node.Id | Out-Null
     }
