@@ -1,63 +1,79 @@
-"""One pass against a local Hardhat node. Skipped when the node is not running."""
+"""Runs against a LIVE local Hardhat node with the contract deployed. Skipped automatically otherwise.
 
-import socket
-
+  cd contracts && npx hardhat node                                   # terminal 1
+  cd contracts && npx hardhat run scripts/deploy.ts --network localhost   # terminal 2
+  cd backend && pytest tests/test_chain_integration.py
+"""
 import pytest
 
-from data.paths import BACKEND_ROOT, DAILY_CSV, MODEL_PATH
+from chain.client import ChainRevert, ChainUnavailable, LoanReliefClient
+from chain.evidence import build_evidence, hash_payload
 
-DEPLOYMENT = BACKEND_ROOT / "chain" / "deployment.json"
+try:
+    CLIENT = LoanReliefClient()
+    SKIP = None
+except ChainUnavailable as exc:
+    CLIENT, SKIP = None, str(exc)
 
+pytestmark = pytest.mark.skipif(CLIENT is None, reason=f"no local chain: {SKIP}")
 
-def _node_is_up() -> bool:
-    try:
-        with socket.create_connection(("127.0.0.1", 8545), 0.4):
-            return True
-    except OSError:
-        return False
-
-
-pytestmark = pytest.mark.skipif(
-    not (_node_is_up() and DEPLOYMENT.exists() and DAILY_CSV.exists() and MODEL_PATH.exists()),
-    reason="local Hardhat node is not running",
-)
+BORROWER = "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"  # Hardhat account #2 (public test address)
+TRIGGER = 13630
 
 
-def test_create_check_and_evidence_round_trip_on_a_local_node():
-    from fastapi.testclient import TestClient
+def evidence(season, mm_total):
+    p = build_evidence(region_name="Nueva Ecija", latitude=15.58, longitude=121.0, season_id=season,
+                       daily_precip_mm=[(f"{season}-06-01", mm_total)], trigger_tenths_mm=TRIGGER,
+                       fetched_at="2026-11-23T00:00:00Z")
+    return hash_payload(p), p["season_total_tenths_mm"]
 
-    from app.main import app
 
-    client = TestClient(app)
-    created = client.post(
-        "/api/loans",
-        json={
-            "borrower": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
-            "principal_cents": 5_000_000,
-            "annual_rate_bps": 1200,
-            "term_months": 12,
-            "max_reduction_bps": 3000,
-            "max_deferral_months": 2,
-        },
-    )
-    assert created.status_code == 200, created.text
-    loan_id = created.json()["loan_id"]
-    assert created.json()["tx_hash"].startswith("0x")
+def new_loan():
+    return CLIENT.create_loan(BORROWER, 100_000_00, 1200, 24, TRIGGER, 5000, 4)["loan_id"]
 
-    checked = client.post(f"/api/oracle/check/{loan_id}", params={"season": 2017})
-    assert checked.status_code == 200, checked.text
-    body = checked.json()
-    assert body["applied"] is True
-    assert body["tx_hash"].startswith("0x")
-    evidence = client.get("/api/evidence/" + body["evidence_hash"])
-    assert evidence.status_code == 200
-    assert evidence.json()["matches"] is True
-    assert evidence.json()["payload"]["season_rainfall_tenths_mm"] == body["season_rainfall_tenths_mm"]
 
-    again = client.post(f"/api/oracle/check/{loan_id}", params={"season": 2017})
-    assert again.status_code == 409
+def test_full_relief_round_trip():
+    loan_id = new_loan()
+    h, observed = evidence(2004, 1244.0)
+    res = CLIENT.apply_relief(loan_id, 2004, observed, "DEFERRAL", 2, h)
+    assert res["tx_hash"].startswith("0x") and len(res["tx_hash"]) == 66
+    hist = CLIENT.get_history(loan_id)
+    assert len(hist) == 1 and hist[0]["reliefType"] == "DEFERRAL" and hist[0]["dataSourceHash"] == h
+    assert CLIENT.get_loan(loan_id)["deferralUsedMonths"] == 2
+    assert CLIENT.season_relieved(loan_id, 2004)
 
-    wet = client.post(f"/api/oracle/check/{loan_id}", params={"season": 2026})
-    assert wet.status_code == 200
-    assert wet.json()["applied"] is False
-    assert wet.json()["tx_hash"] is None
+
+def test_rainfall_above_trigger_reverts_with_decoded_reason():
+    loan_id = new_loan()
+    h, observed = evidence(2005, 1500.0)
+    with pytest.raises(ChainRevert) as e:
+        CLIENT.apply_relief(loan_id, 2005, observed, "REDUCTION", 1000, h)
+    assert e.value.error == "TriggerNotMet"
+    assert CLIENT.get_history(loan_id) == []  # nothing was sent
+
+
+def test_same_season_twice_reverts():
+    loan_id = new_loan()
+    h1, obs = evidence(2017, 1239.0)
+    CLIENT.apply_relief(loan_id, 2017, obs, "REDUCTION", 1000, h1)
+    h2, _ = evidence(2017, 1238.0)
+    with pytest.raises(ChainRevert) as e:
+        CLIENT.apply_relief(loan_id, 2017, obs, "REDUCTION", 1000, h2)
+    assert e.value.error == "SeasonAlreadyRelieved"
+
+
+def test_cap_exceeded_reverts():
+    loan_id = new_loan()
+    h, obs = evidence(2003, 1235.0)
+    with pytest.raises(ChainRevert) as e:
+        CLIENT.apply_relief(loan_id, 2003, obs, "REDUCTION", 5001, h)
+    assert e.value.error == "ReductionCapExceeded"
+
+
+def test_payment_and_missing_loan():
+    loan_id = new_loan()
+    CLIENT.record_payment(loan_id, 500_00)
+    assert CLIENT.get_loan(loan_id)["paidCents"] == 500_00
+    with pytest.raises(ChainRevert) as e:
+        CLIENT.get_loan(9999)
+    assert e.value.error == "LoanNotFound"

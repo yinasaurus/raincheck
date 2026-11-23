@@ -149,11 +149,11 @@ Then open `http://127.0.0.1:8000/docs`.
 | `GET /api/weather/observed?from=2015-06-01&to=2015-10-31&resolution=weekly` | Cached observations. `resolution` is `daily`, `weekly`, or `monthly` |
 | `GET /api/risk` | Latest season: held-out score when one exists, band, reasons, template explanation, whether the 1,363 mm line was crossed |
 | `POST /api/simulate` with `{"year": 2004}` | That season, week by week |
-| `POST /api/loans` | Create a loan on the local contract. Trigger defaults to the 1,363 mm line |
-| `GET /api/loans/{id}` | On-chain terms, relief history, schedule before and after |
-| `POST /api/oracle/check/{id}?season=2017` | If the season total is strictly below the loan's trigger, record relief. Otherwise no transaction |
-| `GET /api/evidence/{hash}` | Stored weather payload plus a recomputed keccak256 |
-| `POST /api/demo/run` with `{"year": 2004}` | New loan, weekly replay, scores, and the schedule change in one response |
+| `POST /api/loans` | Create a loan. Defaults: trigger 13,630 tenths (1,363.0 mm), 1,200 bps, 24 months, max reduction 5,000 bps, max deferral 4 months |
+| `GET /api/loans/{id}` | On-chain loan, relief history, and the before/after schedule |
+| `POST /api/oracle/check/{id}?season=2017` | June–October daily rainfall from the cache. Relief only if that total is strictly below the loan trigger |
+| `GET /api/evidence/{hash}` | Stored weather payload and whether the file name matches a fresh keccak256 |
+| `POST /api/demo/run` with `{"year": 2004}` | A new loan, the weekly replay, model versus rule versus the rainfall line, the oracle result, and both schedules |
 
 2004 is a useful replay: the held-out score is in the high band from early in the season, and the season total of 1,244 mm fires the trigger on the last step. 2017 fires the trigger as well, and the held-out model score stays near 0.06. That gap is real.
 
@@ -196,24 +196,24 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/api/demo/run -ContentT
 curl -s -X POST http://127.0.0.1:8000/api/demo/run -H "content-type: application/json" -d '{"year":2004}'
 ```
 
-`POST /api/demo/run` always creates a new loan, because each loan allows one relief event per season. The response shape is stable:
+`POST /api/demo/run` always creates a new loan, so each replay is independent. Creating that loan is one transaction. `applyRelief` is a second transaction only when the summed daily rainfall is strictly below the loan trigger. A year above the line still has a create transaction and a null `oracle.tx_hash`. The response shape is stable:
 
 | Field | Meaning |
 | --- | --- |
+| `year`, `limitations` | The replayed season, and the same limitation strings as the Phase 1 routes |
 | `weekly` | The same week rows as `POST /api/simulate` |
 | `model_score`, `rule_score`, `score_source`, `score_week` | Last week that was actually scored, not a carried-forward week |
-| `trigger` | Phase 1 whole-millimetre rule. `uses_model_score` is false |
-| `chain_trigger` | Tenths of a millimetre, the comparison the contract uses |
-| `loan` | New loan id and the create transaction |
-| `relief` | `applied`, `tx_hash`, `evidence_hash`, and a message. No hash is invented when relief is not applied |
-| `schedule_before`, `schedule_after`, `summary` | Installments in demo cents, and the cash and interest difference |
-| `comparison_note`, `limitations` | The model does not change what is owed. The oracle problem and basis risk stay on the response |
+| `rainfall_line` | Phase 1 whole-millimetre rule. `uses_model_score` is false. This value is not sent to the contract |
+| `loan` | New loan id, `create_tx_hash`, and the terms used: 10,000,000 cents, 1,200 bps, 24 months, trigger 13,630, max reduction 5,000 bps, max deferral 4. Borrower is Hardhat account #2 |
+| `oracle` | The `check_and_apply` result: `relief_applied`, `reason`, `season_total_mm`, `trigger_mm`, and `tx_hash` plus `evidence_hash` (both null when no relief transaction was sent) |
+| `schedule_before`, `schedule_after`, `summary` | `chain.schedule.before_and_after`. First due date is 1 November of the replayed year. The first relief event starts at installment 4 and lasts 3 months |
+| `comparison_note` | The model score is shown beside the rule and the rainfall line. It is not an input to relief |
 
-2004 and 2017 both end under 1,363 mm, so both apply a 30% reduction for the next 3 installments. In 2017 the held-out model score stays near 0.06. The rainfall line still fires. 2026 is above the line, so the response says no relief and sends no transaction.
+2004 and 2017 both end under 1,363 mm, so both post a 3,000 bps reduction for installments 4, 5, and 6. In 2017 the held-out model score stays near 0.06. The rainfall line still fires. 2005 is above the line: the response says no relief and the oracle sends no transaction.
 
 ## Chain
 
-`contracts/contracts/LoanRelief.sol` stores integers only.
+`contracts/contracts/LoanRelief.sol` stores integers only. Contract rules are also in `README-CHAIN.md`.
 
 | Quantity | Unit |
 | --- | --- |
@@ -221,38 +221,35 @@ curl -s -X POST http://127.0.0.1:8000/api/demo/run -H "content-type: application
 | Rates and reductions | Basis points. 100% is 10,000. 30% is 3,000 |
 | Money | Cents of a demo currency. 100 cents = 1.00. This is not legal tender and the contract does not move it |
 
-The deployer is the owner. One oracle address is set in the constructor (Hardhat account #1) and only the owner can change it. Only the oracle can call `applyRelief`. The borrower or the oracle can call `recordPayment`. Loan terms have no setter.
+The deployer is the owner. The oracle address is set in the constructor (Hardhat account #1) and only the owner can change it. Only the oracle can call `applyRelief`. The borrower or the oracle can call `recordPayment`. Loan terms have no setter.
 
 `applyRelief` reverts unless every one of these holds:
 
 1. The caller is the oracle.
-2. The loan exists.
-3. Observed rainfall is strictly below the loan's trigger. Equal does not fire.
-4. A reduction is at most `maxReductionBps`, and the running total of reductions for that loan is also at most `maxReductionBps`.
-5. A deferral, added to deferrals already stored, is at most `maxDeferralMonths`. A single deferral also cannot exceed that cap.
-6. This `seasonId` has not been used on this loan, and this `dataSourceHash` has not been used on this loan.
+2. The loan exists (`LoanNotFound`).
+3. Observed rainfall is strictly below the loan's trigger (`TriggerNotMet`). Equal does not fire.
+4. This reduction, added to reductions already stored, is at most `maxReductionBps` (`ReductionCapExceeded`).
+5. This deferral, added to deferrals already stored, is at most `maxDeferralMonths` (`DeferralCapExceeded`).
+6. This `seasonId` has not been used on this loan (`SeasonAlreadyRelieved`), and this evidence hash has not been used on this loan (`EvidenceAlreadyUsed`).
 
-The running cap on reductions is an explicit RainCheck decision. The brief caps each reduction and caps deferral both per call and in total. Capping the running reduction the same way stops a 30% term from being posted again in a later season. The contract does not read weather, a model score, or a schedule. It enforces the caps and records the event.
+The running cap on reductions is an explicit RainCheck decision. It stops a 30% reduction from being posted again in a later season. The contract does not read weather, a model score, or a schedule.
 
-Phase 1 still compares whole millimetres (`data/trigger.py`, half-up). The contract compares tenths. A total of 1,362.6 mm is 1,363 whole millimetres (no relief in Phase 1) and 13,626 tenths (relief on chain if the trigger is 13,630). The demo seasons are not near that boundary, so both rules agree. The loan stores the tenths it was created with, so a later change to the average does not rewrite an old loan.
+Phase 1 still compares whole millimetres (`data/trigger.py`, half-up). The oracle sums each cached day as `round(mm * 10)` tenths. A total of 1,362.6 mm is 1,363 whole millimetres (no relief in Phase 1) and 13,626 tenths (relief on chain if the trigger is 13,630). The demo years are not near that boundary. The loan stores the tenths it was created with.
 
-The oracle check builds one canonical JSON file: region, coordinates, season, the season rainfall total, the daily precipitation series, the Open-Meteo source, the cache fetch time, the trigger, the loan id, and the relief choice including the 3-month window. Keys are sorted and there is no space after `:` or `,`. keccak256 of those bytes is `dataSourceHash`. The file is `backend/data/evidence/<hash>.json`. `GET /api/evidence/{hash}` returns the file and hashes it again. The hash is not inside the file.
+The oracle writes one canonical JSON file only when the tenths total is strictly below the trigger: region, coordinates, season, daily precipitation, the Open-Meteo source, the cache fetch time, and the trigger. Keys are sorted. keccak256 of those bytes is the evidence hash. The file is `backend/data/evidence/<hash>.json`. `GET /api/evidence/{hash}` reads that file and hashes it again. The hash is not inside the file.
 
-If the node is stopped, loan routes return HTTP 503 and do not invent a transaction. A second relief for the same loan and season returns HTTP 409.
+If the node is stopped, loan routes return HTTP 503 and do not invent a transaction. `LoanNotFound` is HTTP 404. Any other revert is HTTP 409 with the error name. A second check for a season that already has relief returns HTTP 200 with `relief_applied: false` and the reason, because that case is an expected outcome of `check_and_apply`.
 
 ## Repayment schedule
 
-`backend/chain/schedule.py` is off-chain. The contract does not store it. Money is demo cents. Interest for a month is `balance * annual_rate_bps / (12 * 10000)`, half-up. The baseline payment is the standard annuity, half-up to cents. A zero rate splits the principal into equal cents and puts the remainder on the last installment. The last paying installment clears the balance.
+`backend/chain/schedule.py` is off-chain. The contract does not store it. Money is demo cents. The baseline is a standard monthly annuity. The last installment clears the balance.
 
-Relief is applied as if it starts before installment 1, because the contract does not record which month an event belongs to.
+The API maps each history row with `relief_from_history_row`. The first event starts at installment 4. A later event starts on the installment after the previous window, so the windows do not overlap.
 
-- **Reduction.** The next N installments (default 3, and that N is inside the evidence hash) charge `round(payment * (10000 - bps) / 10000)`. The unpaid part stays in the balance. Later months are amortized again. If the window covers the whole term, the earlier months stay reduced and the last installment clears the balance.
-- **Deferral.** The next M installments are 0. Interest is added to the balance and the term grows by M. The original number of paying months is then amortized on the new balance.
-- Several events of one type are added together and applied once. If both types are present, the skip happens first.
+- **Reduction.** The next 3 installments are cut by the given basis points. Interest still accrues, so the unpaid part stays in the balance. After the window the remaining balance is amortized again. The term does not change.
+- **Deferral.** The next M installments are skipped. Interest is added to the balance and the loan ends M months later.
 
-`amount_saved_this_period_cents` is the cash difference on the skipped and reduced installments only. `total_interest_difference_cents` is interest after minus interest before. It is usually positive: the principal is not forgiven, and a smaller payment now means more interest later. The first payment date in the demo is 1 November of the replayed year.
-
-The demo loan is 50,000.00 demo currency (5,000,000 cents), 12% a year, 12 months, trigger 13,630 tenths, max reduction 3,000 bps, max deferral 2 months. When the line fires, the oracle posts a 3,000 bps reduction. The borrower address is Hardhat account #2. No private key for that account is in the backend.
+`summary.payment_saved_first_relief_month_cents` is the cash difference on the first relieved installment. `summary.extra_cost_cents` is total paid after minus total paid before. It is usually positive: the principal is not forgiven, and a smaller payment now means more interest later. The first due date in the demo is 1 November of the replayed year.
 
 ## Limits, stated here on purpose
 
@@ -264,7 +261,7 @@ The demo loan is 50,000.00 demo currency (5,000,000 cents), 12% a year, 12 month
 
 ## Tests
 
-`pytest` from `backend/` covers weekly and monthly sums, season buckets, the SPI formula and the -1.0 cut, incomplete seasons, the 75% baseline, leave-one-year-out normals, the trigger (including the half-millimetre boundary), the relief caps, the Phase 1 API, the repayment schedule, the evidence hash, and the loan routes with a fake chain. The original 26 tests are still in that run. One integration test talks to a local Hardhat node and is skipped when port 8545 is closed.
+`pytest` from `backend/` covers weekly and monthly sums, season buckets, the SPI formula and the -1.0 cut, incomplete seasons, the 75% baseline, leave-one-year-out normals, the trigger (including the half-millimetre boundary), the Phase 1 API, the repayment schedule, the evidence hash, and the loan routes with a fake chain. The original Phase 1 tests are still in that run. The client, oracle, and API integration tests talk to a local Hardhat node and are skipped when port 8545 is closed.
 
 From `contracts/`:
 
