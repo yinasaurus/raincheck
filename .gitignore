@@ -6,8 +6,11 @@ __pycache__/
 venv/
 node_modules/
 dist/
-artifacts/
+contracts/artifacts/
 contracts/cache/
-typechain-types/
+contracts/typechain-types/
+contracts/node.log
 coverage/
 .DS_Store
+backend/chain/deployment.json
+backend/data/evidence/*.json
