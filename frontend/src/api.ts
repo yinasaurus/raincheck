@@ -96,3 +96,40 @@ export function previewSchedule(query: {
 export function getEvidence(hash: string): Promise<EvidenceCheck> {
   return request(`/api/evidence/${encodeURIComponent(hash)}`);
 }
+
+export interface AssistantReply {
+  answer: string;
+  facts_used: { label: string; value: string }[];
+  source: "llm" | "template" | "cache";
+  note?: string | null;
+}
+
+export function askAssistant(body: {
+  question: string;
+  season: number;
+  week: number;
+  loan_id?: number;
+  audience?: "farmer" | "lender";
+  evidence_prefix?: string;
+}): Promise<AssistantReply> {
+  return request("/api/assistant", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export interface WhatIfParse {
+  ok: boolean;
+  season_total_mm: number | null;
+  pct_of_normal: number | null;
+  message: string;
+}
+
+export function parseWhatIf(text: string): Promise<WhatIfParse> {
+  return request("/api/whatif/parse", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
+}

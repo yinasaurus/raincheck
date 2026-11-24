@@ -121,6 +121,22 @@ export const fil = {
   maxCut: "Pinakamalaking bawas, basis points",
   maxSkip: "Pinakamaraming buwang puwedeng laktawan",
   createTx: "Tala nang binuksan ang utang",
+  askTitle: "Ask about this season",
+  askChance: "What does this chance mean?",
+  askWhy: "Why did relief apply, or why not?",
+  askPay: "What happens to my payments?",
+  askLimits: "What are the limits?",
+  askPlaceholder: "Ask in a short sentence",
+  askSend: "Ask",
+  askBased: "Based on:",
+  askLabel: "AI-generated from the numbers on this page. Payments follow the rainfall rule, not this answer.",
+  askBusy: "Basic answer: the AI service is busy.",
+  askLoading: "Getting an answer",
+  askError: "The answer could not be loaded.",
+  askWhat: "Or describe a season total",
+  askApply: "Use this rainfall",
+  auditTitle: "Audit note",
+  auditLabel: "AI-generated. It does not change the record.",
 } as const satisfies Record<keyof typeof en, string>;
 
 export const filLimits = [

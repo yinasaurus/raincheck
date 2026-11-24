@@ -9,6 +9,8 @@ import json
 import os
 import re
 
+from app.semantic_guard import forbidden_claim
+
 # needs review by a native speaker
 _FIL_READY = (
     "Sa ika-{week} na linggo, ang ulan sa ngayon ay {pct}% ng normal sa puntong ito ng panahon. "
@@ -57,7 +59,7 @@ def explain_pair(result: dict | None) -> dict:
     source = "template"
     if result is not None and os.getenv("LLM_API_KEY"):
         rephrased = _rephrase(english, result)
-        if rephrased is not None and _numbers_allowed(rephrased, result):
+        if rephrased is not None and _numbers_allowed(rephrased, result) and _semantics_allowed(rephrased):
             english = rephrased
             source = "llm"
     return {"en": english, "fil": filipino, "source": source}
@@ -79,6 +81,11 @@ def _fields(result: dict) -> dict:
 def allowed_numbers(result: dict) -> set[str]:
     """The only numeric tokens explain() is allowed to print."""
     return {str(value) for value in _fields(result).values()}
+
+
+def _semantics_allowed(text: str) -> bool:
+    """A rephrase that invents a mechanism is dropped, even when every number is allowed."""
+    return forbidden_claim(text) is None
 
 
 def _numbers_allowed(text: str, result: dict) -> bool:

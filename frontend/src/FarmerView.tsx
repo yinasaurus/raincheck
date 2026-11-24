@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { previewSchedule } from "./api";
+import { AskSeason, WhatIfText } from "./ask";
 import { ChartSwitch } from "./charts";
 import { t, type Lang } from "./copy";
 import { RainGauge, SeasonBar } from "./gauge";
@@ -295,6 +296,7 @@ export function FarmerView({
               <p className="mt-2 text-sm leading-6 text-muted">{explanation || t(lang, "na")}</p>
             </div>
           </div>
+          {lang === "en" ? <AskSeason season={demo.year} week={week} loanId={demo.loan?.id} /> : null}
 
           <ChartSwitch
             lang={lang}
@@ -395,6 +397,7 @@ export function FarmerView({
             className="mt-2 min-h-11 w-full"
           />
         </label>
+        {lang === "en" ? <WhatIfText onPick={(millimetres) => void onRain(millimetres)} /> : null}
         <p className="mt-2 text-sm">
           {matchedRelief
             ? matchedRelief

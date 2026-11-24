@@ -8,10 +8,11 @@ from __future__ import annotations
 
 from datetime import date
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.assistant import answer_question, llm_status, parse_whatif
 from app.service import NotReady, RainCheckService, SeasonNotFound
 
 app = FastAPI(
@@ -31,6 +32,19 @@ service = RainCheckService()
 
 class SimulateBody(BaseModel):
     year: int = Field(..., ge=1900, le=2100, examples=[2015])
+
+
+class AssistantIn(BaseModel):
+    question: str = Field(..., min_length=1, max_length=200)
+    season: int = Field(..., ge=1900, le=2100)
+    week: int = Field(..., ge=1, le=21)
+    loan_id: int | None = None
+    audience: str = "farmer"
+    evidence_prefix: str | None = Field(None, max_length=18)
+
+
+class WhatIfIn(BaseModel):
+    text: str = Field("", max_length=200)
 
 
 _DEPRECATED_SCORE = "Deprecated. Use p_relief."
@@ -78,7 +92,20 @@ def health() -> dict:
         "weather_cache": service.daily is not None,
         "model": service.bundle is not None,
         "ready": service.daily is not None and service.bundle is not None,
+        "llm_status": llm_status(),
     }
+
+
+@app.post("/api/assistant")
+def assistant(body: AssistantIn, request: Request) -> dict:
+    """Explain numbers already on the page. This route cannot write a loan or apply relief."""
+    return _call(lambda: answer_question(service, body, request))
+
+
+@app.post("/api/whatif/parse")
+def whatif_parse(body: WhatIfIn, request: Request) -> dict:
+    """Turn one typed rainfall into a slider value. The schedule maths stay on the existing route."""
+    return _call(lambda: parse_whatif(service, body.text, request))
 
 
 @app.get("/api/region")

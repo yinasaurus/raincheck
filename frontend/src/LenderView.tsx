@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { AuditNote } from "./ask";
 import { getEvidence } from "./api";
 import { ChartSwitch, TrendChart } from "./charts";
 import { t, type Lang } from "./copy";
@@ -154,6 +155,9 @@ export function LenderView({
               <p data-testid="verify-result">
                 {check.matches ? t(lang, "match") : t(lang, "mismatch")} {check.recomputed_hash || t(lang, "na")}
               </p>
+            ) : null}
+            {lang === "en" && demo.oracle.relief_applied && isNumber(demo.year) ? (
+              <AuditNote season={demo.year} loanId={demo.loan?.id} evidenceHash={demo.oracle.evidence_hash} />
             ) : null}
           </div>
         ) : (

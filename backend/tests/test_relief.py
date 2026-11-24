@@ -195,6 +195,28 @@ def test_llm_rephrase_keeps_text_when_every_number_is_allowed(monkeypatch):
     assert pair["fil"] == explain(result, "fil")
 
 
+def test_rephrase_that_invents_a_mechanism_uses_the_template(monkeypatch):
+    result = {
+        "week": 12,
+        "rain_pct_of_normal": 70.4,
+        "p_relief": 0.6400,
+        "projected_total_mm": {"p10": 1100.5, "p50": 1402.0, "p90": 1800.5},
+        "payment_line_mm": 1363.0,
+    }
+    english = explain(result, "en")
+    monkeypatch.setenv("LLM_API_KEY", "test-key-not-a-secret")
+    monkeypatch.setattr(
+        "app.relief_text._post_json",
+        lambda url, payload, headers: {
+            "choices": [{"message": {"content": english + " Your payment count is reduced."}}]
+        },
+    )
+    pair = explain_pair(result)
+    assert pair["source"] == "template"
+    assert pair["en"] == english
+    assert "payment count is reduced" not in pair["en"]
+
+
 def test_openapi_marks_old_scores_deprecated_and_demo_years_are_listed():
     from fastapi.testclient import TestClient
 

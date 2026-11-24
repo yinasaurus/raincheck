@@ -108,7 +108,8 @@ def test_phase1_routes_are_unchanged(api):
     assert root.status_code == 200
     assert root.json()["phase"] == 1
     health = client.get("/api/health").json()
-    assert set(health) == {"weather_cache", "model", "ready"}
+    assert set(health) == {"weather_cache", "model", "ready", "llm_status"}
+    assert health["llm_status"] in {"ok", "fallback"}
 
 
 def test_create_loan_uses_the_documented_defaults(api):
