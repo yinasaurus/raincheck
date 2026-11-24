@@ -1,24 +1,37 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Segoe UI", "Helvetica Neue", sans-serif;
-  --font-serif: "Iowan Old Style", Palatino, "Palatino Linotype", Georgia, serif;
-  --color-paper: #f3efe6;
-  --color-ink: #1c1915;
-  --color-field: #1f6b4a;
-  --color-clay: #7c2d12;
-  --color-card: #fffcf7;
+  --font-sans: "Atkinson Hyperlegible", sans-serif;
+  --font-display: "Gabarito", sans-serif;
+  --color-ground: #e8f0f2;
+  --color-panel: #fbfdfd;
+  --color-ink: #12303b;
+  --color-muted: #3f5a64;
+  --color-water: #0d4a63;
+  --color-rain: #3e91b5;
+  --color-gold: #d9a21b;
+  --color-relief: #264d2b;
+  --color-line: #c3d5da;
 }
 
 body {
   margin: 0;
-  font-family: var(--font-sans);
+  background: #e8f0f2;
+  color: #12303b;
+  font-family: "Atkinson Hyperlegible", sans-serif;
   overflow-x: hidden;
 }
 
 :focus-visible {
-  outline: 3px solid #1c1915;
+  outline: 3px solid #d9a21b;
   outline-offset: 2px;
+}
+
+h1,
+h2,
+h3,
+.font-display {
+  font-family: "Gabarito", sans-serif;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -28,8 +41,4 @@ body {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
-}
-
-h1, h2, h3, .font-serif {
-  font-family: var(--font-serif);
 }

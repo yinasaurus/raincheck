@@ -34,7 +34,7 @@ function CopyButton({ value, lang }: { value: string | null | undefined; lang: L
             () => setCopied(false),
           );
         }}
-        className="rounded-full border border-ink px-2 py-1 text-xs"
+        className="min-h-11 rounded-xl border border-water px-3 text-sm text-water"
       >
         {copied ? t(lang, "copied") : t(lang, "copy")}
       </button>
@@ -107,10 +107,10 @@ export function LenderView({
 
   return (
     <div className="space-y-6">
-      {statusMessage(runStatus, lang) ? <p role="alert" className="text-sm text-clay">{statusMessage(runStatus, lang)}</p> : null}
+      {statusMessage(runStatus, lang) ? <p role="alert" className="text-sm text-ink">{statusMessage(runStatus, lang)}</p> : null}
 
-      <section className="rounded-2xl border border-stone-300 bg-white p-4">
-        <h2 className="font-serif text-2xl">{t(lang, "terms")}</h2>
+      <section className="rounded-2xl border border-line bg-panel p-4">
+        <h2 className="font-display font-bold text-water text-2xl">{t(lang, "terms")}</h2>
         {demo?.loan ? (
           <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
             <Field label={t(lang, "loanId")} value={text(demo.loan.id, lang)} />
@@ -121,7 +121,7 @@ export function LenderView({
             <Field label={t(lang, "maxCut")} value={text(demo.loan.max_reduction_bps, lang)} />
             <Field label={t(lang, "maxSkip")} value={text(demo.loan.max_deferral_months, lang)} />
             <div>
-              <dt className="text-stone-600">{t(lang, "createTx")}</dt>
+              <dt className="text-muted">{t(lang, "createTx")}</dt>
               <dd>
                 <CopyButton value={demo.loan.create_tx_hash} lang={lang} />
               </dd>
@@ -132,8 +132,8 @@ export function LenderView({
         )}
       </section>
 
-      <section className="rounded-2xl border border-stone-300 bg-white p-4">
-        <h2 className="font-serif text-2xl">{t(lang, "events")}</h2>
+      <section className="rounded-2xl border border-line bg-panel p-4">
+        <h2 className="font-display font-bold text-water text-2xl">{t(lang, "events")}</h2>
         {demo?.oracle ? (
           <div className="mt-3 space-y-2 text-sm">
             <p>{demo.oracle.relief_applied ? t(lang, "applied") : t(lang, "notApplied")}</p>
@@ -144,10 +144,10 @@ export function LenderView({
             <p>
               {t(lang, "evidence")}: <CopyButton value={demo.oracle.evidence_hash} lang={lang} />
             </p>
-            <button type="button" onClick={() => void verify()} disabled={!demo.oracle.evidence_hash || checking} className="rounded-full border border-ink px-4 py-2 disabled:opacity-50">
+            <button type="button" onClick={() => void verify()} disabled={!demo.oracle.evidence_hash || checking} className="min-h-11 rounded-xl border border-water px-4 text-water disabled:opacity-50">
               {checking ? t(lang, "verifying") : t(lang, "verify")}
             </button>
-            {statusMessage(checkStatus, lang) ? <p className="text-clay">{statusMessage(checkStatus, lang)}</p> : null}
+            {statusMessage(checkStatus, lang) ? <p className="text-ink">{statusMessage(checkStatus, lang)}</p> : null}
             {check ? (
               <p data-testid="verify-result">
                 {check.matches ? t(lang, "match") : t(lang, "mismatch")} {check.recomputed_hash || t(lang, "na")}
@@ -159,8 +159,8 @@ export function LenderView({
         )}
       </section>
 
-      <section className="rounded-2xl border border-stone-300 bg-white p-4" aria-labelledby="advises-title">
-        <h2 id="advises-title" className="font-serif text-2xl">
+      <section className="rounded-2xl border border-line bg-panel p-4" aria-labelledby="advises-title">
+        <h2 id="advises-title" className="font-display font-bold text-water text-2xl">
           {t(lang, "advises")}
         </h2>
         <dl className="mt-3 space-y-1 text-sm">
@@ -184,8 +184,8 @@ export function LenderView({
         <p className="mt-2 text-sm leading-6">{yearNote(2020, year2020, lang)}</p>
       </section>
 
-      <section className="rounded-2xl border border-stone-300 bg-white p-4">
-        <h2 className="font-serif text-2xl">{t(lang, "backtest")}</h2>
+      <section className="rounded-2xl border border-line bg-panel p-4">
+        <h2 className="font-display font-bold text-water text-2xl">{t(lang, "backtest")}</h2>
         <p className="mt-1 text-sm leading-6">{t(lang, "threeOf")}</p>
         <div className="mt-3 max-w-full overflow-x-auto">
           <table className="w-full text-left text-sm">
@@ -205,7 +205,7 @@ export function LenderView({
             </thead>
             <tbody>
               {rows.map((row) => (
-                <tr key={row.year} className={`border-t border-stone-200 ${tags(row.year, lang).length ? "bg-amber-50" : ""}`}>
+                <tr key={row.year} className={`border-t border-line ${tags(row.year, lang).length ? "bg-ground" : ""}`}>
                   <td className="py-1 pr-3">
                     {row.year}
                     {tags(row.year, lang).length ? <span className="ml-1 text-xs">({tags(row.year, lang).join(", ")})</span> : null}
@@ -226,8 +226,8 @@ export function LenderView({
         </div>
       </section>
 
-      <section className="rounded-2xl border border-stone-300 bg-white p-4">
-        <h2 className="font-serif text-2xl">{t(lang, "trend")}</h2>
+      <section className="rounded-2xl border border-line bg-panel p-4">
+        <h2 className="font-display font-bold text-water text-2xl">{t(lang, "trend")}</h2>
         <p className="mt-1 text-sm leading-6">{backtest?.trend?.trend_note || t(lang, "na")}</p>
         <ChartSwitch
           lang={lang}
@@ -243,7 +243,7 @@ export function LenderView({
                 </thead>
                 <tbody>
                   {(backtest?.trend?.season_totals_mm ?? []).map((row) => (
-                    <tr key={row.year} className="border-t border-stone-200">
+                    <tr key={row.year} className="border-t border-line">
                       <td className="py-1 pr-3">{row.year}</td>
                       <td className="py-1 pr-3">{showMm(row.season_total_mm, lang)}</td>
                       <td className="py-1">
@@ -266,8 +266,8 @@ export function LenderView({
         </ChartSwitch>
       </section>
 
-      <section className="rounded-2xl border border-stone-300 bg-white p-4">
-        <h2 className="font-serif text-2xl">{t(lang, "compare")}</h2>
+      <section className="rounded-2xl border border-line bg-panel p-4">
+        <h2 className="font-display font-bold text-water text-2xl">{t(lang, "compare")}</h2>
         <p className="mt-2 text-sm leading-6">{backtest?.small_sample_note || t(lang, "na")}</p>
         <p className="text-sm leading-6">{meta?.selection_bias || t(lang, "na")}</p>
         <div className="mt-3 max-w-full overflow-x-auto">
@@ -286,7 +286,7 @@ export function LenderView({
             </thead>
             <tbody>
               {names.map((name) => (
-                <tr key={name} className="border-t border-stone-200">
+                <tr key={name} className="border-t border-line">
                   <td className="py-1 pr-3">{name}</td>
                   <td className="py-1 pr-3">{plain(candidates[name]?.mean_brier_without_week_21, lang)}</td>
                   <td className="py-1 pr-3">{plain(candidates[name]?.mean_brier_with_week_21, lang)}</td>
@@ -332,7 +332,7 @@ function sortValue(row: BacktestRow, key: SortKey): number {
 function SortHead({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
     <th className="py-1 pr-3">
-      <button type="button" onClick={onClick} className="underline" aria-pressed={active}>
+      <button type="button" onClick={onClick} className="min-h-11 underline" aria-pressed={active}>
         {label}
       </button>
     </th>
@@ -342,7 +342,7 @@ function SortHead({ label, active, onClick }: { label: string; active: boolean; 
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-stone-600">{label}</dt>
+      <dt className="text-muted">{label}</dt>
       <dd className="break-all">{value}</dd>
     </div>
   );

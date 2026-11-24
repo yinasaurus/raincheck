@@ -30,7 +30,7 @@ export function ChartSwitch({
         type="button"
         aria-pressed={asTable}
         onClick={() => setAsTable((value) => !value)}
-        className="mb-2 rounded-full border border-ink px-3 py-1 text-sm"
+        className="mb-2 min-h-11 rounded-xl border border-water px-3 text-sm text-water"
       >
         {asTable ? t(lang, "viewChart") : t(lang, "viewTable")}
       </button>
@@ -39,10 +39,10 @@ export function ChartSwitch({
   );
 }
 
-const ink = "#1c1915";
-const field = "#1f6b4a";
-const clay = "#7c2d12";
-const stone = "#8a8175";
+const ink = "#12303B";
+const rain = "#3E91B5";
+const gold = "#D9A21B";
+const stone = "#3F5A64";
 
 interface RainPoint {
   week: number;
@@ -68,7 +68,7 @@ export function RainChart({ points, lang, animate }: { points: RainPoint[]; lang
           <YAxis tick={{ fill: ink, fontSize: 12 }} width={48} unit="" />
           <Tooltip />
           <Legend />
-          <Line type="monotone" dataKey="soFar" name={t(lang, "rain")} stroke={field} strokeWidth={2} dot={false} connectNulls={false} isAnimationActive={animate} />
+          <Line type="monotone" dataKey="soFar" name={t(lang, "rain")} stroke={rain} strokeWidth={2} dot={false} connectNulls={false} isAnimationActive={animate} />
           <Line type="monotone" dataKey="normal" name={t(lang, "normal")} stroke={stone} strokeWidth={2} strokeDasharray="5 4" dot={false} connectNulls={false} isAnimationActive={animate} />
         </ComposedChart>
       </ResponsiveContainer>
@@ -97,10 +97,10 @@ export function FanChart({
           <Tooltip />
           <Legend />
           <Area dataKey="p10" name={t(lang, "low")} stackId="fan" stroke="none" fill="transparent" legendType="none" />
-          <Area dataKey="span" name={`${t(lang, "low")}–${t(lang, "high")}`} stackId="fan" stroke="none" fill={field} fillOpacity={0.18} />
-          <Line type="monotone" dataKey="p50" name={t(lang, "mid")} stroke={field} strokeWidth={2} dot={false} connectNulls={false} isAnimationActive={animate} />
-          <Line type="monotone" dataKey="p90" name={t(lang, "high")} stroke={field} strokeDasharray="4 4" dot={false} connectNulls={false} isAnimationActive={animate} />
-          {isNumber(line) ? <ReferenceLine y={line} stroke={clay} strokeWidth={1.5} label={t(lang, "line")} /> : null}
+          <Area dataKey="span" name={`${t(lang, "low")}–${t(lang, "high")}`} stackId="fan" stroke="none" fill={rain} fillOpacity={0.18} />
+          <Line type="monotone" dataKey="p50" name={t(lang, "mid")} stroke={rain} strokeWidth={2} dot={false} connectNulls={false} isAnimationActive={animate} />
+          <Line type="monotone" dataKey="p90" name={t(lang, "high")} stroke={rain} strokeDasharray="4 4" dot={false} connectNulls={false} isAnimationActive={animate} />
+          {isNumber(line) ? <ReferenceLine y={line} stroke={gold} strokeWidth={1.5} label={t(lang, "line")} /> : null}
         </ComposedChart>
       </ResponsiveContainer>
     </div>
@@ -133,7 +133,7 @@ export function PaymentChart({
           <Tooltip />
           <Legend />
           <Line type="stepAfter" dataKey="before" name={t(lang, "before")} stroke={stone} strokeDasharray="5 4" dot={false} isAnimationActive={animate} />
-          <Line type="stepAfter" dataKey="after" name={t(lang, "after")} stroke={field} dot={false} isAnimationActive={animate} />
+          <Line type="stepAfter" dataKey="after" name={t(lang, "after")} stroke={rain} dot={false} isAnimationActive={animate} />
         </ComposedChart>
       </ResponsiveContainer>
     </div>
@@ -168,9 +168,9 @@ export function TrendChart({
           <YAxis tick={{ fill: ink, fontSize: 12 }} width={48} />
           <Tooltip />
           <Legend />
-          <Line type="monotone" dataKey="total" name={t(lang, "total")} stroke={field} dot={false} isAnimationActive={animate} />
+          <Line type="monotone" dataKey="total" name={t(lang, "total")} stroke={rain} dot={false} isAnimationActive={animate} />
           <Line type="monotone" dataKey="rolling" name={t(lang, "rolling")} stroke={stone} strokeDasharray="5 4" dot={false} connectNulls={false} isAnimationActive={animate} />
-          {isNumber(line) ? <ReferenceLine y={line} stroke={clay} label={t(lang, "line")} /> : null}
+          {isNumber(line) ? <ReferenceLine y={line} stroke={gold} label={t(lang, "line")} /> : null}
         </ComposedChart>
       </ResponsiveContainer>
     </div>

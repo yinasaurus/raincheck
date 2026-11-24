@@ -63,26 +63,26 @@ export default function App() {
   const paymentLine = backtest?.payment_line_mm ?? region?.trigger?.proposed_trigger_rainfall_mm ?? null;
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-paper text-ink">
-      <header className="border-b border-stone-300 bg-card">
+    <div className="min-h-screen overflow-x-hidden bg-ground text-ink">
+      <header className="border-b border-line bg-panel">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-4">
           <div className="mr-auto">
-            <p className="font-serif text-2xl">{t(lang, "name")}</p>
-            <p className="text-sm text-stone-700">{place}</p>
+            <p className="font-display text-2xl font-bold text-water">{t(lang, "name")}</p>
+            <p className="text-sm text-muted">{place}</p>
           </div>
-          <div className="flex rounded-full border border-stone-300 p-1" role="group" aria-label={t(lang, "farmer")}>
-            <button type="button" onClick={() => setAudience("farmer")} className={`rounded-full px-3 py-1 text-sm ${audience === "farmer" ? "bg-field text-white" : ""}`}>
+          <div className="flex gap-2 rounded-xl border border-line p-1" role="group" aria-label={t(lang, "farmer")}>
+            <button type="button" onClick={() => setAudience("farmer")} className={`min-h-11 rounded-xl px-3 text-sm ${audience === "farmer" ? "bg-water text-panel" : "text-ink"}`}>
               {t(lang, "farmer")}
             </button>
-            <button type="button" onClick={() => setAudience("lender")} className={`rounded-full px-3 py-1 text-sm ${audience === "lender" ? "bg-ink text-white" : ""}`}>
+            <button type="button" onClick={() => setAudience("lender")} className={`min-h-11 rounded-xl px-3 text-sm ${audience === "lender" ? "bg-water text-panel" : "text-ink"}`}>
               {t(lang, "lender")}
             </button>
           </div>
-          <div className="flex rounded-full border border-stone-300 p-1">
-            <button type="button" onClick={() => setLang("en")} className={`rounded-full px-3 py-1 text-sm ${lang === "en" ? "bg-stone-200" : ""}`}>
+          <div className="flex gap-2 rounded-xl border border-line p-1">
+            <button type="button" onClick={() => setLang("en")} className={`min-h-11 rounded-xl px-3 text-sm ${lang === "en" ? "bg-ground" : ""}`}>
               {t(lang, "english")}
             </button>
-            <button type="button" onClick={() => setLang("fil")} className={`rounded-full px-3 py-1 text-sm ${lang === "fil" ? "bg-stone-200" : ""}`}>
+            <button type="button" onClick={() => setLang("fil")} className={`min-h-11 rounded-xl px-3 text-sm ${lang === "fil" ? "bg-ground" : ""}`}>
               {t(lang, "filipino")}
             </button>
           </div>
@@ -91,15 +91,15 @@ export default function App() {
       <main className="mx-auto grid max-w-6xl gap-6 px-4 py-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="min-w-0">
           {loadStatus === 503 ? (
-            <p role="alert" className="mb-3 text-sm text-clay">
+            <p role="alert" className="mb-3 text-sm text-ink">
               {t(lang, "down")}
             </p>
           ) : null}
           {loading ? (
             <div aria-busy="true" aria-label={t(lang, "loading")} className="space-y-3">
-              <div className="h-24 animate-pulse rounded-2xl bg-stone-200" />
-              <div className="h-24 animate-pulse rounded-2xl bg-stone-200" />
-              <div className="h-24 animate-pulse rounded-2xl bg-stone-200" />
+              <div className="h-24 animate-pulse rounded-2xl bg-line" />
+              <div className="h-24 animate-pulse rounded-2xl bg-line" />
+              <div className="h-24 animate-pulse rounded-2xl bg-line" />
             </div>
           ) : audience === "farmer" ? (
             <FarmerView
