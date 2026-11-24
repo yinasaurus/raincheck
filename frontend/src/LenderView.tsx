@@ -3,7 +3,7 @@ import { getEvidence } from "./api";
 import { ChartSwitch, TrendChart } from "./charts";
 import { t, type Lang } from "./copy";
 import { useReducedMotion } from "./motion";
-import { isNumber, showChance, showMm } from "./numbers";
+import { isNumber, showChance, showMm, strictlyBelow } from "./numbers";
 import { statusMessage } from "./status";
 import type { BacktestBody, BacktestRow, DemoRun, EvidenceCheck, RiskBody } from "./types";
 
@@ -240,7 +240,23 @@ export function LenderView({
 
       <section className="rounded-2xl border border-line bg-panel p-4">
         <h2 className="font-display font-bold text-water text-2xl">{t(lang, "trend")}</h2>
-        <p className="mt-1 text-sm leading-6">{backtest?.trend?.trend_note || t(lang, "na")}</p>
+        <p className="mt-1 text-sm leading-6 text-ink">
+          {isNumber(backtest?.trend?.linear_trend_mm_per_year)
+            ? t(lang, "trendCaution").replace("{slope}", String(Math.round(backtest.trend.linear_trend_mm_per_year)))
+            : t(lang, "na")}
+        </p>
+        <p className="text-sm leading-6 text-ink">
+          {isNumber(backtest?.payment_line_mm)
+            ? t(lang, "belowFinished").replace(
+                "{n}",
+                String(
+                  (backtest?.trend?.season_totals_mm ?? []).filter((row) =>
+                    strictlyBelow(row.season_total_mm, backtest.payment_line_mm as number),
+                  ).length,
+                ),
+              )
+            : t(lang, "na")}
+        </p>
         <ChartSwitch
           lang={lang}
           table={
@@ -250,7 +266,8 @@ export function LenderView({
                   <tr>
                     <th className="py-1 pr-3">{t(lang, "year")}</th>
                     <th className="py-1 pr-3">{t(lang, "total")}</th>
-                    <th className="py-1">{t(lang, "rolling")}</th>
+                    <th className="py-1 pr-3">{t(lang, "rolling")}</th>
+                    <th className="py-1">{t(lang, "belowColumn")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -258,8 +275,15 @@ export function LenderView({
                     <tr key={row.year} className="border-t border-line">
                       <td className="py-1 pr-3">{row.year}</td>
                       <td className="py-1 pr-3">{showMm(row.season_total_mm, lang)}</td>
-                      <td className="py-1">
+                      <td className="py-1 pr-3">
                         {showMm(backtest?.trend?.rolling_10_year_mean_mm?.find((item) => item.end_year === row.year)?.mean_mm, lang)}
+                      </td>
+                      <td className="py-1">
+                        {isNumber(backtest?.payment_line_mm)
+                          ? strictlyBelow(row.season_total_mm, backtest.payment_line_mm)
+                            ? t(lang, "yes")
+                            : t(lang, "no")
+                          : t(lang, "na")}
                       </td>
                     </tr>
                   ))}

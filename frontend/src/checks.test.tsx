@@ -1,6 +1,9 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { fireEvent } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { labelBox, labelBoxesOverlap, TrendChart, type PlacedLabel } from "./charts";
 import { en } from "./copy.en";
 import { fil } from "./copy.fil";
 import { FarmerView } from "./FarmerView";
@@ -34,6 +37,55 @@ describe("numbers", () => {
     expect(firstChanged(before, after)).toEqual({ month: 4, before: 470735, after: 329514 });
     expect(reducedWindow(after)).toEqual({ count: 3, percent: 30 });
     expect(reliefSentence("en", 3, 30)).toBe("Your next 3 payments are 30% lower.");
+  });
+});
+
+const reliefModel = JSON.parse(readFileSync(path.resolve("..", "backend", "models", "relief_loo.json"), "utf8")) as {
+  payment_line_mm: number;
+  trend: { season_totals_mm: { year: number; season_total_mm: number }[] };
+};
+
+describe("season rainfall labels", () => {
+  it("keeps label boxes apart at 375px and 1280px", () => {
+    for (const width of [375, 1280]) {
+      const view = render(
+        <TrendChart
+          lang="en"
+          animate={false}
+          width={width}
+          line={reliefModel.payment_line_mm}
+          totals={reliefModel.trend.season_totals_mm}
+          rolling={[]}
+        />,
+      );
+      const labels = [...view.container.querySelectorAll("text[data-label]")].map((node) => {
+        const text = node.textContent ?? "";
+        const placed: PlacedLabel = {
+          text,
+          x: Number(node.getAttribute("x")),
+          y: Number(node.getAttribute("y")),
+          anchor: node.getAttribute("text-anchor") === "end" ? "end" : "start",
+        };
+        return { text, box: labelBox(placed) };
+      });
+      const joined = labels.map((label) => label.text).join(" ");
+      expect(joined).toContain("2003");
+      expect(joined).toContain("2004");
+      expect(joined).toContain("2017");
+      expect(joined).toContain("1,235");
+      expect(joined).toContain("1,244");
+      expect(joined).toContain("1,239");
+      expect(joined).toContain("Payment line 1,363.0 mm");
+      for (let i = 0; i < labels.length; i++) {
+        for (let j = i + 1; j < labels.length; j++) {
+          expect(
+            labelBoxesOverlap(labels[i].box, labels[j].box),
+            `${width}px: "${labels[i].text}" overlaps "${labels[j].text}"`,
+          ).toBe(false);
+        }
+      }
+      view.unmount();
+    }
   });
 });
 
