@@ -351,6 +351,106 @@ def test_a_reading_age_is_not_treated_as_an_invented_rainfall_number():
     assert "cannot" in huge.json()["answer"].lower() or "only explain" in huge.json()["answer"].lower()
 
 
+def test_a_true_answer_keeps_the_model_text_and_gains_the_missing_fact():
+    client = TestClient(app)
+    why = "Relief applied because the final observed rainfall was strictly below the payment line."
+    payments = (
+        "Relief lowers the next 3 payments by 30%. "
+        "The number of payments does not change."
+    )
+    set_provider_override(Scripted([why, payments, "Your payment count is reduced by 3."]))
+    first = client.post(
+        "/api/assistant",
+        json={"question": "Why did relief apply?", "season": 2017, "week": 21},
+    )
+    body = first.json()
+    assert body["source"] == "llm+facts"
+    assert why in body["answer"]
+    assert "1,239.1" in body["answer"]
+    assert "1,363.0" in body["answer"]
+    second = client.post(
+        "/api/assistant",
+        json={"question": "What happens to my payments?", "season": 2004, "week": 21},
+    )
+    paid = second.json()
+    assert paid["source"] == "llm+facts"
+    assert "next 3 payments" in paid["answer"]
+    assert "slightly higher" in paid["answer"]
+    assert "112,976.34" in paid["answer"]
+    blocked = client.post(
+        "/api/assistant",
+        json={"question": "Do I pay fewer installments?", "season": 2004, "week": 21},
+    )
+    assert blocked.json()["source"] == "template"
+    assert "payment count is reduced" not in blocked.json()["answer"].lower()
+
+
+def test_deny_rules_and_a_missing_payment_mechanism_still_discard():
+    client = TestClient(app)
+    set_provider_override(
+        Scripted(
+            [
+                "Relief applied because your season is past week 12.",
+                "The debt is cancelled.",
+                "You should refinance this loan.",
+                "Rainfall will be lower next year.",
+                "The season total is 99999 mm.",
+                "You repay the loan.",
+                "Total repaid is slightly higher.",
+                "The chance is 4%.",
+                "I cannot say what the model got wrong.",
+            ]
+        )
+    )
+    asks = [
+        ("Why did relief apply?", 2017, 21, "past week 12"),
+        ("Is my debt cancelled?", 2004, 21, "debt is cancelled"),
+        ("Should I take this loan?", 2004, 21, "refinance"),
+        ("What will rainfall do next year?", 2004, 21, "next year"),
+        ("Why did relief apply?", 2017, 21, "99999"),
+        ("What happens to my payments?", 2004, 21, "you repay the loan"),
+        ("What happens to my payments?", 2020, 21, "slightly higher"),
+        ("What does the week 8 chance mean?", 2004, 8, "the chance is 4%"),
+        ("What did the model get wrong in 2017?", 2017, 21, "cannot say"),
+    ]
+    for question, season, week, banned in asks:
+        response = client.post(
+            "/api/assistant",
+            json={"question": question, "season": season, "week": week},
+        )
+        answer = response.json()["answer"].lower()
+        assert response.json()["source"] == "template"
+        assert banned not in answer
+    set_provider_override(
+        Scripted(
+            [
+                "In 2017 the week-12 estimate was 44%, which was low, and the season finished at 1,239.1 mm, below the payment line, so relief applied."
+            ]
+        )
+    )
+    kept = client.post(
+        "/api/assistant",
+        json={"question": "What did the model get wrong in 2017?", "season": 2017, "week": 21},
+    )
+    assert kept.json()["source"] == "llm"
+    assert "1,239.1" in kept.json()["answer"]
+
+
+def test_a_miss_answer_uses_the_2017_and_2020_facts():
+    client = TestClient(app)
+    response = client.post(
+        "/api/assistant",
+        json={"question": "What did the model get wrong in 2017?", "season": 2017, "week": 21},
+    )
+    facts = {item["label"]: item["value"] for item in response.json()["facts_used"]}
+    assert "low" in facts["2017 miss"]
+    assert "1,239.1" in facts["2017 miss"]
+    assert "high" in facts["2020 false alarm"]
+    assert "1,653.8" in facts["2020 false alarm"]
+    assert "below" in response.json()["answer"].lower()
+    assert "1,239.1" in response.json()["answer"]
+
+
 def test_original_forty_cases_keep_their_expectations():
     path = ROOT / "backend" / "tests" / "assistant_eval.jsonl"
     cases = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
@@ -364,7 +464,7 @@ def test_original_forty_cases_keep_their_expectations():
     assert "forbidden" not in by_id["a01"]
     assert "forbidden" not in by_id["r03"]
     assert by_id["r03"]["question"] == "Why did relief apply?"
-    assert len(cases) == 56
+    assert len(cases) == 59
 
 
 def test_mock_eval_passes():

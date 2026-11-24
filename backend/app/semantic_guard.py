@@ -135,19 +135,15 @@ def claims_a_cut_when_this_season_has_no_relief(answer: str, facts: list[dict]) 
     return True
 
 
-def states_why_relief_did_or_did_not_apply(answer: str, facts: list[dict]) -> bool:
-    """A why-relief answer has to show the season total, the payment line, and the strictly-below result."""
-    if not _has_fact_number(answer, _fact(facts, "Season total")):
-        return False
-    if not _has_fact_number(answer, _fact(facts, "Payment line")):
-        return False
-    below = _fact(facts, "Strictly below the line").strip().lower()
+def below_result_stated(answer: str, below: str) -> bool:
+    """The strictly-below result is present, and it matches the fact."""
     text = answer or ""
-    if below == "yes":
+    token = below.strip().lower()
+    if token == "yes":
         if re.search(r"not strictly below", text, re.IGNORECASE):
             return False
         return re.search(r"strictly below", text, re.IGNORECASE) is not None
-    if below == "no":
+    if token == "no":
         return (
             re.search(
                 r"strictly below the line(?::| is) no|not strictly below|above the (payment )?line",
@@ -157,6 +153,57 @@ def states_why_relief_did_or_did_not_apply(answer: str, facts: list[dict]) -> bo
             is not None
         )
     return "not finished" in text.lower()
+
+
+def why_fact_sentences(answer: str, facts: list[dict]) -> list[str]:
+    """Verified lines for a why answer that already passed the deny rules and left out a figure."""
+    lines: list[str] = []
+    total = _fact(facts, "Season total")
+    line = _fact(facts, "Payment line")
+    below = _fact(facts, "Strictly below the line")
+    if total and not _has_fact_number(answer, total):
+        lines.append(f"The season total is {total}.")
+    if line and not _has_fact_number(answer, line):
+        lines.append(f"The payment line is {line}.")
+    if below and not below_result_stated(answer, below):
+        lines.append(f"Strictly below the line: {below}.")
+    return lines
+
+
+def higher_total_sentence(answer: str, facts: list[dict]) -> str | None:
+    """The verified total-repaid sentence when that is the only payment gap. None means do not append."""
+    if not _fact(facts, "Relief status").startswith("Relief applied"):
+        return None
+    text = answer or ""
+    unchanged = re.search(
+        r"number of (?:your |the )?payments does not change|"
+        r"does not change the (?:total )?number of (?:your |the )?payments|"
+        r"number of payments stays the same|same number of payments|not pay fewer",
+        text,
+        re.IGNORECASE,
+    )
+    if unchanged is None:
+        return None
+    if re.search(r"next 3 payments", text, re.IGNORECASE) is None:
+        return None
+    if re.search(r"30\s*%", text) is None:
+        return None
+    if re.search(r"slightly higher|total repaid is higher|total repaid goes up|extra cost", text, re.IGNORECASE):
+        return None
+    before = _fact(facts, "Total repaid before")
+    after = _fact(facts, "Total repaid after")
+    return (
+        f"Total repaid is {before} before and {after} after, so the total repaid is slightly higher."
+    )
+
+
+def states_why_relief_did_or_did_not_apply(answer: str, facts: list[dict]) -> bool:
+    """A why-relief answer has to show the season total, the payment line, and the strictly-below result."""
+    if not _has_fact_number(answer, _fact(facts, "Season total")):
+        return False
+    if not _has_fact_number(answer, _fact(facts, "Payment line")):
+        return False
+    return below_result_stated(answer, _fact(facts, "Strictly below the line"))
 
 
 def states_how_payments_change(answer: str, facts: list[dict]) -> bool:

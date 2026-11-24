@@ -203,7 +203,7 @@ export function LenderView({
       <section className="rounded-2xl border border-line bg-panel p-4">
         <h2 className="font-display font-bold text-water text-2xl">{t(lang, "backtest")}</h2>
         <p className="mt-1 text-sm leading-6">{t(lang, "threeOf")}</p>
-        <div className="mt-3 max-w-full overflow-x-auto">
+        <div className="mt-3 max-w-full overflow-x-auto" tabIndex={0}>
           <table className="w-full text-left text-sm">
             <thead>
               <tr>
@@ -310,7 +310,7 @@ export function LenderView({
         <h2 className="font-display font-bold text-water text-2xl">{t(lang, "compare")}</h2>
         <p className="mt-2 text-sm leading-6">{backtest?.small_sample_note || t(lang, "na")}</p>
         <p className="text-sm leading-6">{meta?.selection_bias || t(lang, "na")}</p>
-        <div className="mt-3 max-w-full overflow-x-auto">
+        <div className="mt-3 max-w-full overflow-x-auto" tabIndex={0}>
           <table className="w-full text-left text-sm">
             <thead>
               <tr>

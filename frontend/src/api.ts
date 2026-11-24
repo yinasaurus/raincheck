@@ -100,7 +100,7 @@ export function getEvidence(hash: string): Promise<EvidenceCheck> {
 export interface AssistantReply {
   answer: string;
   facts_used: { label: string; value: string }[];
-  source: "llm" | "template" | "cache";
+  source: "llm" | "llm+facts" | "template" | "cache";
   note?: string | null;
 }
 

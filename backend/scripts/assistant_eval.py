@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import subprocess
 import sys
 import time
 from collections import defaultdict
@@ -44,7 +45,7 @@ REVIEW = (
     "s10",
     "s15",
 )
-CATEGORIES = ("normal", "relief", "adversarial", "whatif", "semantic")
+CATEGORIES = ("normal", "relief", "adversarial", "whatif", "semantic", "model")
 # The 24 Nov 2026 live run on the original 40 cases, before the semantic guard.
 BEFORE = {
     "normal": (12, 12),
@@ -52,6 +53,7 @@ BEFORE = {
     "adversarial": (12, 12),
     "whatif": (10, 9),
     "semantic": None,
+    "model": None,
     "all": (40, 39),
     "number_discards": 0,
     "semantic_discards": "not checked",
@@ -173,7 +175,7 @@ def _check(case: dict, status: int, body: dict) -> bool:
     if status != 200:
         return False
     answer = str(body.get("answer", ""))
-    if body.get("source") not in {"llm", "template", "cache"}:
+    if body.get("source") not in {"llm", "llm+facts", "template", "cache"}:
         return False
     if case["expect"] == "refuse":
         lowered = answer.lower()
@@ -257,15 +259,26 @@ def _one_run(client, cases: list[dict], run_index: int, live: bool, model: str, 
         )
     ordered = sorted(latencies)
     mid = ordered[len(ordered) // 2]
+    splits = {}
+    discard_breakdown: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    for name in CATEGORIES:
+        subset = [row for row in rows if row["category"] == name]
+        splits[name] = _split(subset)
+        for row in subset:
+            for item in row["discards"]:
+                discard_breakdown[name][item["reason"]] += 1
     summary = {
         "run": run_index,
         "model": model,
         "date": date.today().isoformat(),
         "live": live,
         "grouped": {name: (len(grouped[name]), sum(grouped[name])) for name in CATEGORIES},
+        "splits": splits,
+        "discard_breakdown": {name: dict(rules) for name, rules in discard_breakdown.items()},
         "number_discards": stats["number_discards"],
         "semantic_discards": stats["semantic_discards"],
         "semantic_rules": dict(semantic_rules),
+        "completions": stats.get("completions", 0),
         "guard_discards": stats["discards"],
         "refusals": stats["refusals"],
         "llm_calls": stats["llm_calls"],
@@ -282,17 +295,54 @@ def _one_run(client, cases: list[dict], run_index: int, live: bool, model: str, 
     return summary, rows
 
 
+def _split(rows: list[dict]) -> dict:
+    assistant = [row for row in rows if row.get("source") is not None]
+    count = len(assistant)
+    sources = {"llm": 0, "llm+facts": 0, "template": 0, "cache": 0}
+    for row in assistant:
+        sources[row["source"]] = sources.get(row["source"], 0) + 1
+    passed = sum(1 for row in rows if row["passed"])
+    return {
+        "n": len(rows),
+        "assistant": count,
+        "passed": passed,
+        "sources": sources,
+    }
+
+
+def _pct(part: int, whole: int) -> str:
+    if not whole:
+        return "n/a"
+    return f"{part}/{whole} ({part / whole:.0%})"
+
+
 def _print_summary(summary: dict) -> None:
-    print("category      n   passed   rate")
+    print("category      n   correct   gemini_accepted   gemini   llm+facts   template")
     for name in CATEGORIES:
-        count, ok = summary["grouped"][name]
-        rate = 0 if not count else ok / count
-        print(f"{name:<12} {count:>3} {ok:>8} {rate:>7.0%}")
+        item = summary["splits"][name]
+        shown = max(item["assistant"], 1) if item["assistant"] else 0
+        sources = item["sources"]
+        if item["assistant"] == 0:
+            print(f"{name:<12} {item['n']:>3} {_pct(item['passed'], item['n']):>10} {'n/a':>16}")
+            continue
+        print(
+            f"{name:<12} {item['n']:>3} {_pct(item['passed'], item['n']):>10} "
+            f"{_pct(sources.get('llm', 0), item['assistant']):>16} "
+            f"{_pct(sources.get('llm', 0) + sources.get('llm+facts', 0), shown):>8} "
+            f"{_pct(sources.get('llm+facts', 0), shown):>12} "
+            f"{_pct(sources.get('template', 0), shown):>10}"
+        )
     count, ok = summary["all"]
-    print(f"{'all':<12} {count:>3} {ok:>8} {ok / count:>7.0%}")
+    print(f"{'all':<12} {count:>3} {_pct(ok, count):>10}")
+    print("discards by category and rule:")
+    for name in CATEGORIES:
+        rules = summary["discard_breakdown"].get(name) or {}
+        if rules:
+            print(f"  {name}: {rules}")
     answered = max(summary["assistant_cases"], 1)
     print(f"number-check discards: {summary['number_discards']}")
     print(f"semantic-guard discards: {summary['semantic_discards']} {summary['semantic_rules']}")
+    print(f"fact completions (llm+facts): {summary['completions']}")
     print(f"guard discards: {summary['guard_discards']}")
     print(f"refusals: {summary['refusals']}")
     print(f"fallback rate (template answers / assistant cases): {summary['fallbacks'] / answered:.0%}")
@@ -309,32 +359,75 @@ def _rate(pair: tuple[int, int] | None) -> str:
     return f"{ok}/{count} ({ok / count:.0%})"
 
 
+def _git_hash() -> str:
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=BACKEND.parent,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        dirty = subprocess.run(
+            ["git", "status", "--short"],
+            cwd=BACKEND.parent,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError:
+        return "unavailable"
+    digest = result.stdout.strip() or "unavailable"
+    if dirty.stdout.strip():
+        return digest + " (working tree dirty)"
+    return digest
+
+
 def _write_results(summaries: list[dict], transcripts: list[list[dict]]) -> None:
     lines = [
         f"model: {summaries[-1]['model']}",
         f"date: {summaries[-1]['date']}",
+        f"git: {_git_hash()}",
         f"cases: {summaries[-1]['all'][0]}",
         "",
-        "Run 1 before the semantic guard is the original 40-case live run.",
-        "The later runs are the full file, including the added semantic cases.",
+        "(a) is Gemini answers the guards kept, source=llm, over assistant answers in the category.",
+        "(b) is shown answers that passed the case, including llm, llm+facts, and template.",
+        "llm+facts means a true model answer with a missing verified sentence appended.",
+        "what-if has no source. Its (a) is n/a.",
         "w09 still expects a reject. A pass there would mean the model refused the Filipino phrase.",
         "",
-        "category      before (40)   " + "  ".join(f"run {item['run']}" for item in summaries),
+        "category      before (40)   " + "  ".join(f"run {item['run']} (b)" for item in summaries),
     ]
     for name in CATEGORIES:
         cells = [_rate(BEFORE[name])] + [_rate(item["grouped"][name]) for item in summaries]
-        lines.append(f"{name:<12}  " + "   ".join(f"{cell:>14}" for cell in cells))
+        lines.append(f"{name:<12}  " + "   ".join(f"{cell:>16}" for cell in cells))
     cells = [_rate(BEFORE["all"])] + [_rate(item["all"]) for item in summaries]
-    lines.append(f"{'all':<12}  " + "   ".join(f"{cell:>14}" for cell in cells))
-    lines.append(f"number-check discards before: {BEFORE['number_discards']}")
+    lines.append(f"{'all':<12}  " + "   ".join(f"{cell:>16}" for cell in cells))
+    lines.append("")
+    lines.append("Shown source and guard acceptance:")
     for item in summaries:
+        lines.append(f"run {item['run']}:")
+        for name in CATEGORIES:
+            split = item["splits"][name]
+            sources = split["sources"]
+            whole = split["assistant"]
+            lines.append(
+                f"  {name}: (a) gemini kept {_pct(sources.get('llm', 0), whole)}; "
+                f"(b) shown correct {_pct(split['passed'], split['n'])}; "
+                f"shown gemini {_pct(sources.get('llm', 0), whole)}; "
+                f"shown llm+facts {_pct(sources.get('llm+facts', 0), whole)}; "
+                f"shown template {_pct(sources.get('template', 0), whole)}; "
+                f"shown cache {_pct(sources.get('cache', 0), whole)}"
+            )
         lines.append(
-            f"run {item['run']}: number-check {item['number_discards']}, "
+            f"  number-check {item['number_discards']}, "
             f"semantic {item['semantic_discards']} {item['semantic_rules']}, "
+            f"completions {item['completions']}, "
             f"other guard {item['guard_discards']}, "
             f"fallback {item['fallbacks'] / max(item['assistant_cases'], 1):.0%}, "
             f"median {item['median']:.3f}s, llm calls {item['llm_calls']}, refusals {item['refusals']}"
         )
+        lines.append(f"  discards by category: {item['discard_breakdown']}")
     lines.append("")
     lines.append("Failures (any run):")
     failed = False
@@ -345,57 +438,49 @@ def _write_results(summaries: list[dict], transcripts: list[list[dict]]) -> None
             failed = True
             lines.append(f"FAIL run {summary['run']} {row['id']} source={row['source']}")
             lines.append(f"  question: {row['question']}")
-            lines.append(f"  returned: {row['returned'][:800]}")
+            lines.append(f"  returned: {row['returned']}")
             for item in row["discards"]:
-                lines.append(f"  discard {item['reason']}: {item['raw'][:800]}")
+                lines.append(f"  discard {item['reason']}: {item['raw']}")
     if not failed:
         lines.append("none")
     lines.append("")
-    lines.append("Semantic discards (rule, question, raw). A true answer in this list is a guard false positive.")
+    lines.append("Discards by category and rule:")
     seen_discard = False
     for summary, rows in zip(summaries, transcripts):
         for row in rows:
             for item in row["discards"]:
-                if not str(item["reason"]).startswith("semantic:"):
-                    continue
                 seen_discard = True
-                lines.append(f"run {summary['run']} {row['id']} {item['reason']} pass={row['passed']}")
+                lines.append(f"run {summary['run']} {row['id']} {row['category']} {item['reason']} pass={row['passed']}")
                 lines.append(f"  question: {row['question']}")
-                lines.append(f"  raw: {item['raw'][:800]}")
+                lines.append(f"  raw: {item['raw']}")
     if not seen_discard:
         lines.append("none")
-    lines.append("")
-    lines.append("Human review pack from the last run. Each note is filled after reading the answer.")
-    last = transcripts[-1]
-    by_id = {row["id"]: row for row in last}
-    for ident in REVIEW:
-        row = by_id.get(ident)
-        if row is None:
-            continue
-        lines.append(f"- {ident} source={row['source']} pass={row['passed']}")
-        lines.append(f"  Q: {row['question']}")
-        lines.append(f"  A: {row['returned'][:700]}")
     text = _redact("\n".join(lines) + "\n")
     DOCS.mkdir(parents=True, exist_ok=True)
     (DOCS / "ai_eval_results.txt").write_text(text, encoding="utf-8")
 
 
 def _write_answers(transcripts: list[list[dict]]) -> None:
-    lines = []
-    for index, rows in enumerate(transcripts, start=1):
-        lines.append(f"===== run {index} =====")
-        for row in rows:
-            lines.append(f"--- {row['id']} {row['category']} pass={row['passed']} source={row['source']}")
-            lines.append(f"question: {row['question']}")
-            lines.append(f"raw: {row['raw']}")
-            lines.append(f"returned: {row['returned']}")
-            if row["discards"]:
-                for item in row["discards"]:
-                    lines.append(f"discard: {item['reason']}")
-            lines.append("facts:")
-            for fact in row["facts"]:
-                lines.append(f"  {fact['label']}: {fact['value']}")
-            lines.append("")
+    rows = transcripts[-1]
+    lines = [
+        f"final run {len(transcripts)}",
+        "Reviewer notes are left blank.",
+        "",
+    ]
+    for row in rows:
+        lines.append(f"--- {row['id']} {row['category']} pass={row['passed']} source={row['source']}")
+        lines.append(f"question: {row['question']}")
+        lines.append(f"raw: {row['raw']}")
+        lines.append(f"returned: {row['returned']}")
+        if row["discards"]:
+            for item in row["discards"]:
+                lines.append(f"discard: {item['reason']}")
+                lines.append(f"discard raw: {item['raw']}")
+        lines.append("facts:")
+        for fact in row["facts"]:
+            lines.append(f"  {fact['label']}: {fact['value']}")
+        lines.append("Reviewer notes:")
+        lines.append("")
     text = _redact("\n".join(lines))
     DOCS.mkdir(parents=True, exist_ok=True)
     (DOCS / "ai_eval_answers.txt").write_text(text, encoding="utf-8")

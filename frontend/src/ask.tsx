@@ -74,7 +74,7 @@ export function AskSeason({ season, week, loanId }: { season: number; week: numb
             {reply.source === "template" && !reply.note ? <p>{t(lang, "askBusy")}</p> : null}
             <p>{reply.answer}</p>
             <p className="text-muted">{t(lang, "askBased")}</p>
-            <ul className="max-h-40 list-disc overflow-y-auto pl-5">
+            <ul className="max-h-40 list-disc overflow-y-auto pl-5" tabIndex={0} aria-label={t(lang, "askBased")}>
               {reply.facts_used.map((fact) => (
                 <li key={fact.label}>
                   {fact.label}: {fact.value}

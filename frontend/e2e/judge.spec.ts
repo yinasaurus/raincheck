@@ -76,6 +76,8 @@ test("axe finds no serious issues at 390 and 1280", async ({ page }) => {
   await runYear(page, "2004");
   await page.getByRole("slider", { name: "Week" }).fill("21");
   await expect(page.getByTestId("season-banner")).toContainText("30% lower");
+  await page.getByRole("button", { name: "What does this chance mean?" }).click();
+  await expect(page.getByTestId("ask-answer")).toBeVisible({ timeout: 20000 });
   const found = [];
   for (const width of [390, 1280]) {
     await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
@@ -83,6 +85,24 @@ test("axe finds no serious issues at 390 and 1280", async ({ page }) => {
     for (const violation of results.violations) {
       found.push({
         width,
+        view: "farmer-answer",
+        id: violation.id,
+        impact: violation.impact,
+        help: violation.help,
+        nodes: violation.nodes.slice(0, 3).map((node) => node.target.join(" ")),
+      });
+    }
+  }
+  await page.getByRole("button", { name: "See the public record" }).click();
+  await page.getByRole("button", { name: "Audit note" }).click();
+  await expect(page.getByTestId("audit-note")).toContainText("mm", { timeout: 20000 });
+  for (const width of [390, 1280]) {
+    await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+    const results = await new AxeBuilder({ page }).analyze();
+    for (const violation of results.violations) {
+      found.push({
+        width,
+        view: "lender-audit",
         id: violation.id,
         impact: violation.impact,
         help: violation.help,

@@ -340,7 +340,7 @@ export function TrendChart({
   return (
     <div>
       <div className="h-80" role="img" aria-label={summary} ref={frame}>
-        <div className="h-full" aria-hidden="true">
+        <div className="h-full" inert>
         <ResponsiveContainer width={width ?? "100%"} height={width ? 320 : "100%"}>
           <ComposedChart data={points} margin={{ top: 36, right: narrow ? 8 : 40, left: 8, bottom: 4 }}>
             <CartesianGrid stroke="#C3D5DA" vertical={false} />
