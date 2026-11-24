@@ -36,6 +36,18 @@ export function showChance(value: unknown, lang: Lang): string {
   return isNumber(value) ? formatPercent(value) : t(lang, "na");
 }
 
+/** Provincial yield with its difference from the trend, for example "4.44 (+12%)". */
+export function showHarvest(
+  harvest: { yield_t_per_ha?: number | null; vs_trend_pct?: number | null } | null | undefined,
+  lang: Lang,
+): string {
+  if (!harvest || !isNumber(harvest.yield_t_per_ha)) return t(lang, "na");
+  const value = harvest.yield_t_per_ha.toFixed(2);
+  if (!isNumber(harvest.vs_trend_pct)) return value;
+  const sign = harvest.vs_trend_pct > 0 ? "+" : "";
+  return `${value} (${sign}${harvest.vs_trend_pct}%)`;
+}
+
 /** Farmer copy keeps the API sentence and drops a raw four-decimal probability. */
 export function withoutRawProbability(text: string): string {
   const kept = text

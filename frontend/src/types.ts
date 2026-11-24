@@ -106,6 +106,7 @@ export interface BacktestRow {
   p_relief?: Record<string, number | null>;
   first_week_p_relief_at_least_0_5?: number | null;
   false_alarm?: boolean;
+  harvest?: { yield_t_per_ha?: number | null; vs_trend_pct?: number | null } | null;
 }
 
 export interface BacktestBody {
@@ -116,6 +117,7 @@ export interface BacktestBody {
   small_sample_note?: string;
   beats_rule_baseline?: boolean;
   rows?: BacktestRow[];
+  harvest?: { source?: string; province?: string; fetched_at?: string; trend_t_per_ha_per_year?: number | null } | null;
   trend?: {
     linear_trend_mm_per_year?: number;
     linear_trend_p_value?: number;

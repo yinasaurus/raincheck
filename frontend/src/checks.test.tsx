@@ -8,11 +8,18 @@ import { en } from "./copy.en";
 import { fil } from "./copy.fil";
 import { FarmerView } from "./FarmerView";
 import { LimitsPanel } from "./LimitsPanel";
-import { BANNED_WORDS, firstChanged, formatAmount, formatMm, formatPercent, reducedWindow, reliefSentence, strictlyBelow, withoutRawProbability } from "./numbers";
+import { BANNED_WORDS, firstChanged, formatAmount, formatMm, formatPercent, reducedWindow, reliefSentence, showHarvest, strictlyBelow, withoutRawProbability } from "./numbers";
 import { statusMessage } from "./status";
 import type { DemoRun } from "./types";
 
 describe("numbers", () => {
+  it("shows the harvest beside its trend, and n/a with no harvest", () => {
+    expect(showHarvest({ yield_t_per_ha: 4.44, vs_trend_pct: 12 }, "en")).toBe("4.44 (+12%)");
+    expect(showHarvest({ yield_t_per_ha: 3.57, vs_trend_pct: -25 }, "en")).toBe("3.57 (-25%)");
+    expect(showHarvest({ yield_t_per_ha: 5.1, vs_trend_pct: 0 }, "en")).toBe("5.10 (0%)");
+    expect(showHarvest(null, "en")).toBe(en.na);
+  });
+
   it("formats millimetres, percents, and amounts", () => {
     expect(formatMm(1363)).toBe("1,363.0 mm");
     expect(formatMm(1243.9)).toBe("1,243.9 mm");

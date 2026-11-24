@@ -19,7 +19,8 @@ from data.aggregate import (
     season_totals,
     season_week_buckets,
 )
-from data.paths import DAILY_CSV, LOO_SCORES_PATH, METRICS_PATH, MODEL_PATH, REGION_PATH, RELIEF_PATH
+from app.harvest import harvest_rows, harvest_summary, load_harvest
+from data.paths import DAILY_CSV, HARVEST_PATH, LOO_SCORES_PATH, METRICS_PATH, MODEL_PATH, REGION_PATH, RELIEF_PATH
 from data.trigger import agreed_trigger_mm, round_mm, trigger_fires
 from ml.baseline import baseline_probability
 from ml.explain import positive_probability, top_factors
@@ -87,6 +88,7 @@ class RainCheckService:
         if LOO_SCORES_PATH.exists():
             self.loo_scores = json.loads(LOO_SCORES_PATH.read_text(encoding="utf-8")).get("scores", {})
         self.relief = json.loads(RELIEF_PATH.read_text(encoding="utf-8")) if RELIEF_PATH.exists() else None
+        self.harvest = load_harvest(HARVEST_PATH)
         self.labeled = None
         self.labels: dict[int, bool] = {}
         self.buckets: dict[int, pd.DataFrame] = {}
@@ -470,6 +472,7 @@ class RainCheckService:
         report = self.relief
         fired = {int(year) for year in report.get("positive_seasons") or []}
         totals = {int(row["year"]): row["season_total_mm"] for row in report["trend"]["season_totals_mm"]}
+        harvest = harvest_rows(self.harvest)
         rows = []
         for year_text, weeks in sorted(report["scores"].items(), key=lambda item: int(item[0])):
             year = int(year_text)
@@ -487,6 +490,7 @@ class RainCheckService:
                     "p_relief": {week: weeks[week]["p_relief"] for week in ("4", "8", "12", "16", "21")},
                     "first_week_p_relief_at_least_0_5": first,
                     "false_alarm": (not relief) and first is not None,
+                    "harvest": harvest.get(year),
                 }
             )
         return {
@@ -514,6 +518,7 @@ class RainCheckService:
             "lead_time": report.get("lead_time"),
             "metadata": _comparison_metadata(report),
             "limitations": LIMITATIONS,
+            "harvest": harvest_summary(self.harvest),
         }
 
     def demo_years(self) -> dict:

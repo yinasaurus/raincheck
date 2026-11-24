@@ -1,0 +1,913 @@
+{
+  "fetched_at": "2026-11-24T15:08:27Z",
+  "province": "Nueva Ecija",
+  "scope_note": "Province-wide. Most Nueva Ecija rice is irrigated. This is a comparison only. It does not change relief.",
+  "seasons": {
+    "2001": {
+      "annual": {
+        "all": {
+          "area_ha": 245763.0,
+          "production_t": 954899.0,
+          "yield_t_per_ha": 3.89
+        },
+        "irrigated": {
+          "area_ha": 204453.0,
+          "production_t": 818990.0,
+          "yield_t_per_ha": 4.01
+        },
+        "rainfed": {
+          "area_ha": 41310.0,
+          "production_t": 135909.0,
+          "yield_t_per_ha": 3.29
+        }
+      },
+      "wet_season": {
+        "all": {
+          "area_ha": 150007.0,
+          "production_t": 528657.0,
+          "yield_t_per_ha": 3.52
+        },
+        "irrigated": {
+          "area_ha": 108697.0,
+          "production_t": 392748.0,
+          "yield_t_per_ha": 3.61
+        },
+        "rainfed": {
+          "area_ha": 41310.0,
+          "production_t": 135909.0,
+          "yield_t_per_ha": 3.29
+        }
+      }
+    },
+    "2002": {
+      "annual": {
+        "all": {
+          "area_ha": 239127.0,
+          "production_t": 968754.0,
+          "yield_t_per_ha": 4.05
+        },
+        "irrigated": {
+          "area_ha": 197662.0,
+          "production_t": 817407.0,
+          "yield_t_per_ha": 4.14
+        },
+        "rainfed": {
+          "area_ha": 41465.0,
+          "production_t": 151347.0,
+          "yield_t_per_ha": 3.65
+        }
+      },
+      "wet_season": {
+        "all": {
+          "area_ha": 149103.0,
+          "production_t": 558343.0,
+          "yield_t_per_ha": 3.74
+        },
+        "irrigated": {
+          "area_ha": 107638.0,
+          "production_t": 406996.0,
+          "yield_t_per_ha": 3.78
+        },
+        "rainfed": {
+          "area_ha": 41465.0,
+          "production_t": 151347.0,
+          "yield_t_per_ha": 3.65
+        }
+      }
+    },
+    "2003": {
+      "annual": {
+        "all": {
+          "area_ha": 243499.0,
+          "production_t": 1101798.0,
+          "yield_t_per_ha": 4.52
+        },
+        "irrigated": {
+          "area_ha": 202155.0,
+          "production_t": 958334.0,
+          "yield_t_per_ha": 4.74
+        },
+        "rainfed": {
+          "area_ha": 41344.0,
+          "production_t": 143464.0,
+          "yield_t_per_ha": 3.47
+        }
+      },
+      "wet_season": {
+        "all": {
+          "area_ha": 148029.0,
+          "production_t": 639115.0,
+          "yield_t_per_ha": 4.32
+        },
+        "irrigated": {
+          "area_ha": 106685.0,
+          "production_t": 495651.0,
+          "yield_t_per_ha": 4.65
+        },
+        "rainfed": {
+          "area_ha": 41344.0,
+          "production_t": 143464.0,
+          "yield_t_per_ha": 3.47
+        }
+      }
+    },
+    "2004": {
+      "annual": {
+        "all": {
+          "area_ha": 244450.0,
+          "production_t": 1128070.0,
+          "yield_t_per_ha": 4.61
+        },
+        "irrigated": {
+          "area_ha": 204250.0,
+          "production_t": 982491.0,
+          "yield_t_per_ha": 4.81
+        },
+        "rainfed": {
+          "area_ha": 40200.0,
+          "production_t": 145579.0,
+          "yield_t_per_ha": 3.62
+        }
+      },
+      "wet_season": {
+        "all": {
+          "area_ha": 146717.0,
+          "production_t": 650697.0,
+          "yield_t_per_ha": 4.44
+        },
+        "irrigated": {
+          "area_ha": 106517.0,
+          "production_t": 505118.0,
+          "yield_t_per_ha": 4.74
+        },
+        "rainfed": {
+          "area_ha": 40200.0,
+          "production_t": 145579.0,
+          "yield_t_per_ha": 3.62
+        }
+      }
+    },
+    "2005": {
+      "annual": {
+        "all": {
+          "area_ha": 245223.0,
+          "production_t": 1136623.0,
+          "yield_t_per_ha": 4.64
+        },
+        "irrigated": {
+          "area_ha": 207023.0,
+          "production_t": 1008653.0,
+          "yield_t_per_ha": 4.87
+        },
+        "rainfed": {
+          "area_ha": 38200.0,
+          "production_t": 127970.0,
+          "yield_t_per_ha": 3.35
+        }
+      },
+      "wet_season": {
+        "all": {
+          "area_ha": 145310.0,
+          "production_t": 633844.0,
+          "yield_t_per_ha": 4.36
+        },
+        "irrigated": {
+          "area_ha": 107110.0,
+          "production_t": 505874.0,
+          "yield_t_per_ha": 4.72
+        },
+        "rainfed": {
+          "area_ha": 38200.0,
+          "production_t": 127970.0,
+          "yield_t_per_ha": 3.35
+        }
+      }
+    },
+    "2006": {
+      "annual": {
+        "all": {
+          "area_ha": 255618.0,
+          "production_t": 1231176.0,
+          "yield_t_per_ha": 4.82
+        },
+        "irrigated": {
+          "area_ha": 216768.0,
+          "production_t": 1083546.0,
+          "yield_t_per_ha": 5.0
+        },
+        "rainfed": {
+          "area_ha": 38850.0,
+          "production_t": 147630.0,
+          "yield_t_per_ha": 3.8
+        }
+      },
+      "wet_season": {
+        "all": {
+          "area_ha": 158450.0,
+          "production_t": 739158.0,
+          "yield_t_per_ha": 4.66
+        },
+        "irrigated": {
+          "area_ha": 119600.0,
+          "production_t": 591528.0,
+          "yield_t_per_ha": 4.95
+        },
+        "rainfed": {
+          "area_ha": 38850.0,
+          "production_t": 147630.0,
+          "yield_t_per_ha": 3.8
+        }
+      }
+    },
+    "2007": {
+      "annual": {
+        "all": {
+          "area_ha": 274850.0,
+          "production_t": 1356161.0,
+          "yield_t_per_ha": 4.93
+        },
+        "irrigated": {
+          "area_ha": 236150.0,
+          "production_t": 1211036.0,
+          "yield_t_per_ha": 5.13
+        },
+        "rainfed": {
+          "area_ha": 38700.0,
+          "production_t": 145125.0,
+          "yield_t_per_ha": 3.75
+        }
+      },
+      "wet_season": {
+        "all": {
+          "area_ha": 167950.0,
+          "production_t": 784595.0,
+          "yield_t_per_ha": 4.67
+        },
+        "irrigated": {
+          "area_ha": 129250.0,
+          "production_t": 639470.0,
+          "yield_t_per_ha": 4.95
+        },
+        "rainfed": {
+          "area_ha": 38700.0,
+          "production_t": 145125.0,
+          "yield_t_per_ha": 3.75
+        }
+      }
+    },
+    "2008": {
+      "annual": {
+        "all": {
+          "area_ha": 285905.0,
+          "production_t": 1372378.0,
+          "yield_t_per_ha": 4.8
+        },
+        "irrigated": {
+          "area_ha": 246305.0,
+          "production_t": 1245667.0,
+          "yield_t_per_ha": 5.06
+        },
+        "rainfed": {
+          "area_ha": 39600.0,
+          "production_t": 126711.0,
+          "yield_t_per_ha": 3.2
+        }
+      },
+      "wet_season": {
+        "all": {
+          "area_ha": 175070.0,
+          "production_t": 751654.0,
+          "yield_t_per_ha": 4.29
+        },
+        "irrigated": {
+          "area_ha": 135470.0,
+          "production_t": 624943.0,
+          "yield_t_per_ha": 4.61
+        },
+        "rainfed": {
+          "area_ha": 39600.0,
+          "production_t": 126711.0,
+          "yield_t_per_ha": 3.2
+        }
+      }
+    },
+    "2009": {
+      "annual": {
+        "all": {
+          "area_ha": 295840.0,
+          "production_t": 1360915.0,
+          "yield_t_per_ha": 4.6
+        },
+        "irrigated": {
+          "area_ha": 257109.0,
+          "production_t": 1233490.0,
+          "yield_t_per_ha": 4.8
+        },
+        "rainfed": {
+          "area_ha": 38731.0,
+          "production_t": 127425.0,
+          "yield_t_per_ha": 3.29
+        }
+      },
+      "wet_season": {
+        "all": {
+          "area_ha": 174487.0,
+          "production_t": 647092.0,
+          "yield_t_per_ha": 3.71
+        },
+        "irrigated": {
+          "area_ha": 135756.0,
+          "production_t": 519667.0,
+          "yield_t_per_ha": 3.83
+        },
+        "rainfed": {
+          "area_ha": 38731.0,
+          "production_t": 127425.0,
+          "yield_t_per_ha": 3.29
+        }
+      }
+    },
+    "2010": {
+      "annual": {
+        "all": {
+          "area_ha": 299844.0,
+          "production_t": 1374173.0,
+          "yield_t_per_ha": 4.58
+        },
+        "irrigated": {
+          "area_ha": 261034.0,
+          "production_t": 1275979.0,
+          "yield_t_per_ha": 4.89
+        },
+        "rainfed": {
+          "area_ha": 38810.0,
+          "production_t": 98194.0,
+          "yield_t_per_ha": 2.53
+        }
+      },
+      "wet_season": {
+        "all": {
+          "area_ha": 175569.0,
+          "production_t": 645074.0,
+          "yield_t_per_ha": 3.67
+        },
+        "irrigated": {
+          "area_ha": 136759.0,
+          "production_t": 546880.0,
+          "yield_t_per_ha": 4.0
+        },
+        "rainfed": {
+          "area_ha": 38810.0,
+          "production_t": 98194.0,
+          "yield_t_per_ha": 2.53
+        }
+      }
+    },
+    "2011": {
+      "annual": {
+        "all": {
+          "area_ha": 286821.0,
+          "production_t": 1313487.0,
+          "yield_t_per_ha": 4.58
+        },
+        "irrigated": {
+          "area_ha": 249571.0,
+          "production_t": 1193138.0,
+          "yield_t_per_ha": 4.78
+        },
+        "rainfed": {
+          "area_ha": 37250.0,
+          "production_t": 120349.0,
+          "yield_t_per_ha": 3.23
+        }
+      },
+      "wet_season": {
+        "all": {
+          "area_ha": 160996.0,
+          "production_t": 570641.0,
+          "yield_t_per_ha": 3.54
+        },
+        "irrigated": {
+          "area_ha": 123746.0,
+          "production_t": 450292.0,
+          "yield_t_per_ha": 3.64
+        },
+        "rainfed": {
+          "area_ha": 37250.0,
+          "production_t": 120349.0,
+          "yield_t_per_ha": 3.23
+        }
+      }
+    },
+    "2012": {
+      "annual": {
+        "all": {
+          "area_ha": 304189.0,
+          "production_t": 1587163.0,
+          "yield_t_per_ha": 5.22
+        },
+        "irrigated": {
+          "area_ha": 265802.0,
+          "production_t": 1452825.0,
+          "yield_t_per_ha": 5.47
+        },
+        "rainfed": {
+          "area_ha": 38387.0,
+          "production_t": 134338.0,
+          "yield_t_per_ha": 3.5
+        }
+      },
+      "wet_season": {
+        "all": {
+          "area_ha": 176544.0,
+          "production_t": 816000.0,
+          "yield_t_per_ha": 4.62
+        },
+        "irrigated": {
+          "area_ha": 138157.0,
+          "production_t": 681662.0,
+          "yield_t_per_ha": 4.93
+        },
+        "rainfed": {
+          "area_ha": 38387.0,
+          "production_t": 134338.0,
+          "yield_t_per_ha": 3.5
+        }
+      }
+    },
+    "2013": {
+      "annual": {
+        "all": {
+          "area_ha": 315376.0,
+          "production_t": 1672666.0,
+          "yield_t_per_ha": 5.3
+        },
+        "irrigated": {
+          "area_ha": 277185.0,
+          "production_t": 1520319.0,
+          "yield_t_per_ha": 5.48
+        },
+        "rainfed": {
+          "area_ha": 38191.0,
+          "production_t": 152347.0,
+          "yield_t_per_ha": 3.99
+        }
+      },
+      "wet_season": {
+        "all": {
+          "area_ha": 181775.0,
+          "production_t": 855166.0,
+          "yield_t_per_ha": 4.7
+        },
+        "irrigated": {
+          "area_ha": 143584.0,
+          "production_t": 702819.0,
+          "yield_t_per_ha": 4.89
+        },
+        "rainfed": {
+          "area_ha": 38191.0,
+          "production_t": 152347.0,
+          "yield_t_per_ha": 3.99
+        }
+      }
+    },
+    "2014": {
+      "annual": {
+        "all": {
+          "area_ha": 318284.0,
+          "production_t": 1930996.0,
+          "yield_t_per_ha": 6.07
+        },
+        "irrigated": {
+          "area_ha": 280756.0,
+          "production_t": 1758634.0,
+          "yield_t_per_ha": 6.26
+        },
+        "rainfed": {
+          "area_ha": 37528.0,
+          "production_t": 172362.0,
+          "yield_t_per_ha": 4.59
+        }
+      },
+      "wet_season": {
+        "all": {
+          "area_ha": 181430.0,
+          "production_t": 977704.0,
+          "yield_t_per_ha": 5.39
+        },
+        "irrigated": {
+          "area_ha": 143902.0,
+          "production_t": 805342.0,
+          "yield_t_per_ha": 5.6
+        },
+        "rainfed": {
+          "area_ha": 37528.0,
+          "production_t": 172362.0,
+          "yield_t_per_ha": 4.59
+        }
+      }
+    },
+    "2015": {
+      "annual": {
+        "all": {
+          "area_ha": 308446.0,
+          "production_t": 1580620.0,
+          "yield_t_per_ha": 5.12
+        },
+        "irrigated": {
+          "area_ha": 270509.0,
+          "production_t": 1474352.0,
+          "yield_t_per_ha": 5.45
+        },
+        "rainfed": {
+          "area_ha": 37937.0,
+          "production_t": 106268.0,
+          "yield_t_per_ha": 2.8
+        }
+      },
+      "wet_season": {
+        "all": {
+          "area_ha": 172771.0,
+          "production_t": 616853.0,
+          "yield_t_per_ha": 3.57
+        },
+        "irrigated": {
+          "area_ha": 134834.0,
+          "production_t": 510585.0,
+          "yield_t_per_ha": 3.79
+        },
+        "rainfed": {
+          "area_ha": 37937.0,
+          "production_t": 106268.0,
+          "yield_t_per_ha": 2.8
+        }
+      }
+    },
+    "2016": {
+      "annual": {
+        "all": {
+          "area_ha": 313448.0,
+          "production_t": 1684352.0,
+          "yield_t_per_ha": 5.37
+        },
+        "irrigated": {
+          "area_ha": 279075.0,
+          "production_t": 1576079.0,
+          "yield_t_per_ha": 5.65
+        },
+        "rainfed": {
+          "area_ha": 34373.0,
+          "production_t": 108273.0,
+          "yield_t_per_ha": 3.15
+        }
+      },
+      "wet_season": {
+        "all": {
+          "area_ha": 178329.0,
+          "production_t": 709608.0,
+          "yield_t_per_ha": 3.98
+        },
+        "irrigated": {
+          "area_ha": 143956.0,
+          "production_t": 601335.0,
+          "yield_t_per_ha": 4.18
+        },
+        "rainfed": {
+          "area_ha": 34373.0,
+          "production_t": 108273.0,
+          "yield_t_per_ha": 3.15
+        }
+      }
+    },
+    "2017": {
+      "annual": {
+        "all": {
+          "area_ha": 324042.0,
+          "production_t": 1884091.0,
+          "yield_t_per_ha": 5.81
+        },
+        "irrigated": {
+          "area_ha": 290864.0,
+          "production_t": 1737108.0,
+          "yield_t_per_ha": 5.97
+        },
+        "rainfed": {
+          "area_ha": 33178.0,
+          "production_t": 146983.0,
+          "yield_t_per_ha": 4.43
+        }
+      },
+      "wet_season": {
+        "all": {
+          "area_ha": 187481.0,
+          "production_t": 940427.0,
+          "yield_t_per_ha": 5.02
+        },
+        "irrigated": {
+          "area_ha": 154303.0,
+          "production_t": 793444.0,
+          "yield_t_per_ha": 5.14
+        },
+        "rainfed": {
+          "area_ha": 33178.0,
+          "production_t": 146983.0,
+          "yield_t_per_ha": 4.43
+        }
+      }
+    },
+    "2018": {
+      "annual": {
+        "all": {
+          "area_ha": 333177.0,
+          "production_t": 1886708.93,
+          "yield_t_per_ha": 5.66
+        },
+        "irrigated": {
+          "area_ha": 299996.0,
+          "production_t": 1740010.81,
+          "yield_t_per_ha": 5.8
+        },
+        "rainfed": {
+          "area_ha": 33181.0,
+          "production_t": 146698.12,
+          "yield_t_per_ha": 4.42
+        }
+      },
+      "wet_season": {
+        "all": {
+          "area_ha": 191827.0,
+          "production_t": 941985.93,
+          "yield_t_per_ha": 4.91
+        },
+        "irrigated": {
+          "area_ha": 158646.0,
+          "production_t": 795287.81,
+          "yield_t_per_ha": 5.01
+        },
+        "rainfed": {
+          "area_ha": 33181.0,
+          "production_t": 146698.12,
+          "yield_t_per_ha": 4.42
+        }
+      }
+    },
+    "2019": {
+      "annual": {
+        "all": {
+          "area_ha": 336330.21,
+          "production_t": 1955961.14,
+          "yield_t_per_ha": 5.82
+        },
+        "irrigated": {
+          "area_ha": 312510.21,
+          "production_t": 1860078.14,
+          "yield_t_per_ha": 5.95
+        },
+        "rainfed": {
+          "area_ha": 23820.0,
+          "production_t": 95883.0,
+          "yield_t_per_ha": 4.03
+        }
+      },
+      "wet_season": {
+        "all": {
+          "area_ha": 186475.21,
+          "production_t": 950946.05,
+          "yield_t_per_ha": 5.1
+        },
+        "irrigated": {
+          "area_ha": 162655.21,
+          "production_t": 855063.05,
+          "yield_t_per_ha": 5.26
+        },
+        "rainfed": {
+          "area_ha": 23820.0,
+          "production_t": 95883.0,
+          "yield_t_per_ha": 4.03
+        }
+      }
+    },
+    "2020": {
+      "annual": {
+        "all": {
+          "area_ha": 319331.0,
+          "production_t": 1904827.36,
+          "yield_t_per_ha": 5.97
+        },
+        "irrigated": {
+          "area_ha": 298453.0,
+          "production_t": 1815295.86,
+          "yield_t_per_ha": 6.08
+        },
+        "rainfed": {
+          "area_ha": 20878.0,
+          "production_t": 89531.5,
+          "yield_t_per_ha": 4.29
+        }
+      },
+      "wet_season": {
+        "all": {
+          "area_ha": 170164.0,
+          "production_t": 945485.27,
+          "yield_t_per_ha": 5.56
+        },
+        "irrigated": {
+          "area_ha": 149286.0,
+          "production_t": 855953.77,
+          "yield_t_per_ha": 5.73
+        },
+        "rainfed": {
+          "area_ha": 20878.0,
+          "production_t": 89531.5,
+          "yield_t_per_ha": 4.29
+        }
+      }
+    },
+    "2021": {
+      "annual": {
+        "all": {
+          "area_ha": 318691.84,
+          "production_t": 1884323.97,
+          "yield_t_per_ha": 5.91
+        },
+        "irrigated": {
+          "area_ha": 304279.82,
+          "production_t": 1822245.97,
+          "yield_t_per_ha": 5.99
+        },
+        "rainfed": {
+          "area_ha": 14412.02,
+          "production_t": 62078.0,
+          "yield_t_per_ha": 4.31
+        }
+      },
+      "wet_season": {
+        "all": {
+          "area_ha": 167777.02,
+          "production_t": 988901.74,
+          "yield_t_per_ha": 5.89
+        },
+        "irrigated": {
+          "area_ha": 153365.0,
+          "production_t": 926823.74,
+          "yield_t_per_ha": 6.04
+        },
+        "rainfed": {
+          "area_ha": 14412.02,
+          "production_t": 62078.0,
+          "yield_t_per_ha": 4.31
+        }
+      }
+    },
+    "2022": {
+      "annual": {
+        "all": {
+          "area_ha": 293050.61,
+          "production_t": 1781964.01,
+          "yield_t_per_ha": 6.08
+        },
+        "irrigated": {
+          "area_ha": 286965.61,
+          "production_t": 1754296.11,
+          "yield_t_per_ha": 6.11
+        },
+        "rainfed": {
+          "area_ha": 6085.0,
+          "production_t": 27667.9,
+          "yield_t_per_ha": 4.55
+        }
+      },
+      "wet_season": {
+        "all": {
+          "area_ha": 139582.42,
+          "production_t": 743278.96,
+          "yield_t_per_ha": 5.33
+        },
+        "irrigated": {
+          "area_ha": 133497.42,
+          "production_t": 715611.06,
+          "yield_t_per_ha": 5.36
+        },
+        "rainfed": {
+          "area_ha": 6085.0,
+          "production_t": 27667.9,
+          "yield_t_per_ha": 4.55
+        }
+      }
+    },
+    "2023": {
+      "annual": {
+        "all": {
+          "area_ha": 293043.45,
+          "production_t": 1839858.69,
+          "yield_t_per_ha": 6.28
+        },
+        "irrigated": {
+          "area_ha": 288974.45,
+          "production_t": 1820369.54,
+          "yield_t_per_ha": 6.3
+        },
+        "rainfed": {
+          "area_ha": 4069.0,
+          "production_t": 19489.15,
+          "yield_t_per_ha": 4.79
+        }
+      },
+      "wet_season": {
+        "all": {
+          "area_ha": 122843.45,
+          "production_t": 747555.39,
+          "yield_t_per_ha": 6.09
+        },
+        "irrigated": {
+          "area_ha": 118774.45,
+          "production_t": 728066.24,
+          "yield_t_per_ha": 6.13
+        },
+        "rainfed": {
+          "area_ha": 4069.0,
+          "production_t": 19489.15,
+          "yield_t_per_ha": 4.79
+        }
+      }
+    },
+    "2024": {
+      "annual": {
+        "all": {
+          "area_ha": 292613.09,
+          "production_t": 1772448.7,
+          "yield_t_per_ha": 6.06
+        },
+        "irrigated": {
+          "area_ha": 290003.09,
+          "production_t": 1761056.05,
+          "yield_t_per_ha": 6.07
+        },
+        "rainfed": {
+          "area_ha": 2610.0,
+          "production_t": 11392.65,
+          "yield_t_per_ha": 4.37
+        }
+      },
+      "wet_season": {
+        "all": {
+          "area_ha": 130520.33,
+          "production_t": 713814.67,
+          "yield_t_per_ha": 5.47
+        },
+        "irrigated": {
+          "area_ha": 127910.33,
+          "production_t": 702422.02,
+          "yield_t_per_ha": 5.49
+        },
+        "rainfed": {
+          "area_ha": 2610.0,
+          "production_t": 11392.65,
+          "yield_t_per_ha": 4.37
+        }
+      }
+    },
+    "2025": {
+      "annual": {
+        "all": {
+          "area_ha": 297571.0,
+          "production_t": 1804894.08,
+          "yield_t_per_ha": 6.07
+        },
+        "irrigated": {
+          "area_ha": 296725.0,
+          "production_t": 1801091.96,
+          "yield_t_per_ha": 6.07
+        },
+        "rainfed": {
+          "area_ha": 846.0,
+          "production_t": 3802.12,
+          "yield_t_per_ha": 4.49
+        }
+      },
+      "wet_season": {
+        "all": {
+          "area_ha": 133242.0,
+          "production_t": 718093.38,
+          "yield_t_per_ha": 5.39
+        },
+        "irrigated": {
+          "area_ha": 132396.0,
+          "production_t": 714291.26,
+          "yield_t_per_ha": 5.4
+        },
+        "rainfed": {
+          "area_ha": 846.0,
+          "production_t": 3802.12,
+          "yield_t_per_ha": 4.49
+        }
+      }
+    }
+  },
+  "source": "Philippine Statistics Authority, OpenSTAT, Palay Production Survey",
+  "tables": {
+    "area_ha": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS/0022E4EAHC0.px",
+    "production_t": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS/0012E4EVCP0.px"
+  },
+  "wet_season_note": "Semester 2 is the July to December harvest. It is the crop grown through the June to October rain season."
+}

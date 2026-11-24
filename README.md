@@ -385,6 +385,12 @@ The API maps each history row with `relief_from_history_row`. The first event st
 - Twenty-six seasons and six proxy droughts are a small sample. The week-12 v1 scores will move if the record grows. v1 missed 2017. The payment-line score has only three seasons below 1,363.0 mm, and its bootstrap interval overlaps the rule's.
 - A season-total trigger can miss a damaging dry spell inside a season that still finishes above the line.
 
+## Harvest beside the rainfall
+
+The lender's 26-season table has a harvest column: the Nueva Ecija rice yield for the July to December harvest, in tonnes per hectare, from the Philippine Statistics Authority (OpenSTAT, Palay Production Survey, production divided by area harvested). July to December is the crop that grows through the June to October rain season. `backend/scripts/fetch_harvest.py` downloads it once into `backend/data/harvest/nueva_ecija_palay.json`. The app reads that file and never calls PSA while it runs. The file covers 2001 to 2025. The 2026 harvest was not published when it was fetched, so that row shows not available.
+
+Yields rose about 0.076 tonnes per hectare per year, so each season is compared with a straight-line trend instead of a flat average. In the three seasons below the line the harvest was 11 percent, 12 percent, and 2 percent above that trend (2003, 2004, 2017). The weakest harvests against the trend, 2009 to 2011 and 2015 to 2016, came in seasons above the line. This is the whole province, and most of its rice is irrigated, so a dry season at one map point does not show up as a weaker provincial harvest. The harvest is a comparison only. It does not reach the payment line, the oracle, or the schedule, and a test checks that those files never read it.
+
 ## AI in RainCheck
 
 AI explains and estimates. Only observed rainfall moves money. None of these components can create a loan, apply relief, or compute an amount that the schedule or the rainfall rule did not already compute.

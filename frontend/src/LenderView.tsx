@@ -4,7 +4,7 @@ import { getEvidence } from "./api";
 import { ChartSwitch, TrendChart } from "./charts";
 import { t, type Lang } from "./copy";
 import { useReducedMotion } from "./motion";
-import { isNumber, showChance, showMm, strictlyBelow } from "./numbers";
+import { isNumber, showChance, showHarvest, showMm, strictlyBelow } from "./numbers";
 import { statusMessage } from "./status";
 import type { BacktestBody, BacktestRow, DemoRun, EvidenceCheck, RiskBody } from "./types";
 
@@ -73,6 +73,8 @@ export function LenderView({
   const line = isNumber(demo?.rainfall_line?.trigger_rainfall_mm) ? demo.rainfall_line.trigger_rainfall_mm : backtest?.payment_line_mm;
   const year2017 = backtest?.rows?.find((row) => row.year === 2017);
   const year2020 = backtest?.rows?.find((row) => row.year === 2020);
+  const belowWithHarvest = (backtest?.rows ?? []).filter((row) => row.relief_fired && isNumber(row.harvest?.vs_trend_pct));
+  const belowAtOrAboveTrend = belowWithHarvest.filter((row) => (row.harvest?.vs_trend_pct as number) >= 0).length;
 
   const rows = useMemo(() => {
     const list = [...(backtest?.rows ?? [])];
@@ -217,6 +219,7 @@ export function LenderView({
                 ))}
                 <th className="py-1 pr-3">{t(lang, "first")}</th>
                 <SortHead label={t(lang, "falseAlarm")} active={sortKey === "alarm"} onClick={() => sort("alarm")} />
+                <th className="py-1 pl-3">{t(lang, "harvestCol")}</th>
               </tr>
             </thead>
             <tbody>
@@ -235,11 +238,27 @@ export function LenderView({
                   ))}
                   <td className="py-1 pr-3">{row.first_week_p_relief_at_least_0_5 ?? t(lang, "na")}</td>
                   <td className="py-1">{row.false_alarm ? t(lang, "yes") : t(lang, "no")}</td>
+                  <td className="py-1 pl-3" data-testid={`harvest-${row.year}`}>
+                    {showHarvest(row.harvest, lang)}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+        {backtest?.harvest ? (
+          <div className="mt-3 space-y-1 text-sm leading-6" data-testid="harvest-note">
+            <p>{t(lang, "harvestNote")}</p>
+            {belowWithHarvest.length ? (
+              <p>
+                {t(lang, "harvestBelow")
+                  .replace("{n}", String(belowAtOrAboveTrend))
+                  .replace("{m}", String(belowWithHarvest.length))}
+              </p>
+            ) : null}
+            <p className="text-muted">{t(lang, "harvestScope")}</p>
+          </div>
+        ) : null}
       </section>
 
       <section className="rounded-2xl border border-line bg-panel p-4">

@@ -55,6 +55,18 @@ test("lender copy and verify", async ({ page }) => {
   await expect(page.getByTestId("verify-result")).toContainText("Match", { timeout: 20000 });
 });
 
+test("the 26-season table shows the harvest beside each season", async ({ page }) => {
+  await openFarmer(page);
+  await page.getByRole("button", { name: "Lender and auditor" }).click();
+  await expect(page.getByTestId("harvest-2004")).toHaveText("4.44 (+12%)");
+  await expect(page.getByTestId("harvest-2017")).toHaveText("5.02 (+2%)");
+  await expect(page.getByTestId("harvest-2026")).toHaveText("not available");
+  const note = page.getByTestId("harvest-note");
+  await expect(note).toContainText("Philippine Statistics Authority");
+  await expect(note).toContainText("In 3 of the 3 seasons below the line, the harvest was at or above that trend.");
+  await expect(note).toContainText("It does not change relief.");
+});
+
 test("the farmer flow works from the keyboard", async ({ page }) => {
   await openFarmer(page);
   await focusByText(page, "2004");
