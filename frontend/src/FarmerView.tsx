@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { previewSchedule } from "./api";
 import { ChartSwitch } from "./charts";
 import { t, type Lang } from "./copy";
 import { RainGauge, SeasonBar } from "./gauge";
+import { useReducedMotion } from "./motion";
 import {
   firstChanged,
   formatAmount,
@@ -14,9 +15,10 @@ import {
   showChance,
   showMm,
   strictlyBelow,
+  withoutRawProbability,
 } from "./numbers";
 import { statusMessage } from "./status";
-import type { DemoRun, DemoYear, RiskBody } from "./types";
+import type { DemoRun, DemoYear } from "./types";
 
 type Payish = { month: number; payment_cents: number; note?: string };
 
@@ -74,7 +76,7 @@ export function FarmerView({
   running,
   runStatus,
   demo,
-  risk,
+  seasonTotal,
   paymentLine,
   onOpenRecord,
 }: {
@@ -86,7 +88,7 @@ export function FarmerView({
   running: boolean;
   runStatus: number | null;
   demo: DemoRun | null;
-  risk: RiskBody | null;
+  seasonTotal: number | null;
   paymentLine: number | null;
   onOpenRecord: () => void;
 }) {
@@ -95,12 +97,30 @@ export function FarmerView({
   const [rain, setRain] = useState(1500);
   const [sim, setSim] = useState<{ before: Payish[]; after: Payish[] } | null>(null);
   const [simError, setSimError] = useState<number | null>(null);
+  const replayRef = useRef<HTMLElement>(null);
+  const reduceMotion = useReducedMotion();
+  const observedRain = isNumber(demo?.rainfall_line?.observed_rainfall_mm) ? demo.rainfall_line.observed_rainfall_mm : null;
+  const observedKey = demo && selectedYear !== null && demo.year === selectedYear ? observedRain : null;
 
   useEffect(() => {
     setWeek(1);
     setPlaying(false);
     setSim(null);
   }, [demo?.year]);
+
+  useEffect(() => {
+    const next = isNumber(observedKey) ? observedKey : seasonTotal;
+    if (!isNumber(next)) return;
+    setRain(Math.round(next * 10) / 10);
+    setSim(null);
+    setSimError(null);
+  }, [selectedYear, seasonTotal, observedKey]);
+
+  useEffect(() => {
+    const node = replayRef.current;
+    if (!demo?.loan?.id || !node || typeof node.scrollIntoView !== "function") return;
+    node.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+  }, [demo?.loan?.id, reduceMotion]);
 
   useEffect(() => {
     if (!playing) return;
@@ -173,7 +193,12 @@ export function FarmerView({
     }
   }
 
-  const explanation = current?.explanations?.[lang];
+  const explanation = withoutRawProbability(current?.explanations?.[lang] ?? "");
+  const matchesReplay = observedRain !== null && Math.abs(rain - observedRain) < 0.051;
+  const matchedRelief =
+    matchesReplay && fired === true && reliefWindow.count > 0 && reliefWindow.percent !== null
+      ? reliefSentence(lang, reliefWindow.count, reliefWindow.percent)
+      : null;
   const endMonth = demo?.summary?.relief_months;
   const baseMonth = demo?.summary?.baseline_months;
 
@@ -211,19 +236,11 @@ export function FarmerView({
         {runStatus !== null && runStatus !== 503 && runStatus !== 409 ? <p className="mt-2 text-sm text-ink">{t(lang, "failed")}</p> : null}
       </section>
 
-      {risk ? (
-        <section className="rounded-2xl border border-line bg-panel p-4">
-          <h2 className="font-display text-xl font-bold text-water">
-            {t(lang, "latest")} {isNumber(risk.season_year) ? risk.season_year : t(lang, "na")}
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-muted">{risk.explanations?.[lang] || t(lang, "na")}</p>
-        </section>
-      ) : null}
-
       {!demo ? <p className="text-sm">{t(lang, "runFirst")}</p> : null}
 
       {demo ? (
         <section
+          ref={replayRef}
           className="space-y-4 rounded-2xl border border-line bg-panel p-4"
           data-testid="replay"
           data-year={demo.year}
@@ -275,9 +292,6 @@ export function FarmerView({
               <p className="font-display text-6xl font-medium leading-none text-water">{showChance(current?.p_relief, lang)}</p>
               <p className="mt-2 inline-block rounded-xl border border-water px-3 py-2 text-sm font-bold text-water">{t(lang, "advisory")}</p>
               {week < 12 ? <p className="mt-2 text-sm text-muted">{t(lang, "rough")}</p> : null}
-              <p className="mt-2 text-sm text-muted">
-                {t(lang, "rule")}: {showChance(current?.rule_score, lang)}
-              </p>
               <p className="mt-2 text-sm leading-6 text-muted">{explanation || t(lang, "na")}</p>
             </div>
           </div>
@@ -366,9 +380,8 @@ export function FarmerView({
         </section>
       ) : null}
 
-      <section className="rounded-2xl border border-line bg-panel p-4">
+      <section className="rounded-2xl border border-line bg-panel p-4" data-testid="what-if">
         <h2 className="font-display text-xl font-bold text-water">{t(lang, "whatIf")}</h2>
-        <p className="text-sm font-medium">{t(lang, "simulation")}</p>
         <label className="mt-2 block text-sm">
           {t(lang, "slider")}: {rain.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} {t(lang, "mm")}
           <input
@@ -383,10 +396,19 @@ export function FarmerView({
           />
         </label>
         <p className="mt-2 text-sm">
-          {!isNumber(line) ? t(lang, "na") : strictlyBelow(rain, line) ? t(lang, "wouldRelief") : t(lang, "wouldNot")}
+          {matchedRelief
+            ? matchedRelief
+            : matchesReplay && fired === false
+              ? t(lang, "noRelief")
+              : !isNumber(line)
+                ? t(lang, "na")
+                : strictlyBelow(rain, line)
+                  ? t(lang, "wouldRelief")
+                  : t(lang, "wouldNot")}
         </p>
+        {matchesReplay && fired === true ? <p className="text-sm">{t(lang, "depends")}</p> : null}
         {statusMessage(simError, lang) ? <p className="text-sm text-ink">{statusMessage(simError, lang)}</p> : null}
-        {isNumber(line) && !strictlyBelow(rain, line) ? <p className="text-sm">{t(lang, "unchanged")}</p> : null}
+        {isNumber(line) && !matchesReplay && !strictlyBelow(rain, line) ? <p className="text-sm">{t(lang, "unchanged")}</p> : null}
         {sim ? (
           <SimLine lang={lang} before={sim.before} after={sim.after} />
         ) : null}

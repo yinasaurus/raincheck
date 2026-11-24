@@ -36,6 +36,18 @@ export function showChance(value: unknown, lang: Lang): string {
   return isNumber(value) ? formatPercent(value) : t(lang, "na");
 }
 
+/** Farmer copy keeps the API sentence and drops a raw four-decimal probability. */
+export function withoutRawProbability(text: string): string {
+  const kept = text
+    .split(/(?<=\.)\s+/)
+    .filter((sentence) => !/\d\.\d{4}/.test(sentence))
+    .join(" ")
+    .replace(/\b\d+\.\d{4}\b/g, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+  return kept;
+}
+
 export function showAmount(cents: unknown, lang: Lang): string {
   return isNumber(cents) ? formatAmount(cents) : t(lang, "na");
 }

@@ -12,7 +12,12 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${BASE}${path}`, init);
+  let response: Response;
+  try {
+    response = await fetch(`${BASE}${path}`, init);
+  } catch {
+    throw new ApiError(503, "The record service is not running");
+  }
   if (!response.ok) {
     let detail = response.statusText;
     try {

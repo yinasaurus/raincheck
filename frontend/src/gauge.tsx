@@ -39,7 +39,7 @@ export function RainGauge({
   ].join(". ");
 
   return (
-    <svg viewBox="0 0 320 320" className="h-80 w-full max-w-xs" role="img" aria-label={label}>
+    <svg viewBox="0 0 320 320" className="aspect-square h-auto w-full" role="img" aria-label={label}>
       {[0, 500, 1000, 1500, 2000].map((tick) => (
         <g key={tick}>
           <line x1={TUBE_X - 8} x2={TUBE_X} y1={yOf(tick)} y2={yOf(tick)} stroke="#3F5A64" strokeWidth="1" />
@@ -59,7 +59,7 @@ export function RainGauge({
       {lineY !== null ? (
         <g>
           <line x1={TUBE_X - 6} x2={TUBE_X + TUBE_W + 8} y1={lineY} y2={lineY} stroke="#D9A21B" strokeWidth="3" />
-          <text x={TUBE_X + TUBE_W + 14} y={lineY} fill="#D9A21B" fontSize="13" fontFamily="Gabarito, sans-serif">
+          <text x={TUBE_X + TUBE_W + 14} y={lineY} fill="#D9A21B" fontSize="16" fontFamily="Gabarito, sans-serif">
             <tspan x={TUBE_X + TUBE_W + 14} dy="-4">
               {t(lang, "line")}
             </tspan>

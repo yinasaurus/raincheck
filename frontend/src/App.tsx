@@ -4,6 +4,7 @@ import { t, type Lang } from "./copy";
 import { FarmerView } from "./FarmerView";
 import { LenderView } from "./LenderView";
 import { LimitsPanel } from "./LimitsPanel";
+import { isNumber } from "./numbers";
 import type { BacktestBody, DemoRun, DemoYear, RegionBody, RiskBody } from "./types";
 
 type Audience = "farmer" | "lender";
@@ -61,29 +62,30 @@ export default function App() {
 
   const place = region?.name && region?.crop ? `${region.name} · ${region.crop}` : t(lang, "na");
   const paymentLine = backtest?.payment_line_mm ?? region?.trigger?.proposed_trigger_rainfall_mm ?? null;
+  const seasonTotal = backtest?.rows?.find((row) => row.year === selectedYear)?.season_total_mm ?? null;
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-ground text-ink">
       <header className="border-b border-line bg-panel">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-4">
-          <div className="mr-auto">
-            <p className="font-display text-2xl font-bold text-water">{t(lang, "name")}</p>
+        <div className="site-header mx-auto max-w-6xl px-4 py-4">
+          <div className="site-brand">
+            <h1 className="font-display text-2xl font-bold text-water">{t(lang, "name")}</h1>
             <p className="text-sm text-muted">{place}</p>
           </div>
-          <div className="flex gap-2 rounded-xl border border-line p-1" role="group" aria-label={t(lang, "farmer")}>
-            <button type="button" onClick={() => setAudience("farmer")} className={`min-h-11 rounded-xl px-3 text-sm ${audience === "farmer" ? "bg-water text-panel" : "text-ink"}`}>
-              {t(lang, "farmer")}
-            </button>
-            <button type="button" onClick={() => setAudience("lender")} className={`min-h-11 rounded-xl px-3 text-sm ${audience === "lender" ? "bg-water text-panel" : "text-ink"}`}>
-              {t(lang, "lender")}
-            </button>
-          </div>
-          <div className="flex gap-2 rounded-xl border border-line p-1">
+          <div className="site-lang flex gap-2 rounded-xl border border-line p-1" role="group" aria-label={t(lang, "english")}>
             <button type="button" onClick={() => setLang("en")} className={`min-h-11 rounded-xl px-3 text-sm ${lang === "en" ? "bg-ground" : ""}`}>
               {t(lang, "english")}
             </button>
             <button type="button" onClick={() => setLang("fil")} className={`min-h-11 rounded-xl px-3 text-sm ${lang === "fil" ? "bg-ground" : ""}`}>
               {t(lang, "filipino")}
+            </button>
+          </div>
+          <div className="site-audience flex gap-2 rounded-xl border border-line p-1" role="group" aria-label={t(lang, "farmer")}>
+            <button type="button" onClick={() => setAudience("farmer")} className={`min-h-11 rounded-xl px-3 text-sm ${audience === "farmer" ? "bg-water text-panel" : "text-ink"}`}>
+              {t(lang, "farmer")}
+            </button>
+            <button type="button" onClick={() => setAudience("lender")} className={`min-h-11 rounded-xl px-3 text-sm ${audience === "lender" ? "bg-water text-panel" : "text-ink"}`}>
+              {t(lang, "lender")}
             </button>
           </div>
         </div>
@@ -111,12 +113,12 @@ export default function App() {
               running={running}
               runStatus={runStatus}
               demo={demo}
-              risk={risk}
+              seasonTotal={isNumber(seasonTotal) ? seasonTotal : null}
               paymentLine={paymentLine}
               onOpenRecord={() => setAudience("lender")}
             />
           ) : (
-            <LenderView lang={lang} demo={demo} backtest={backtest} runStatus={runStatus} />
+            <LenderView lang={lang} demo={demo} backtest={backtest} risk={risk} runStatus={runStatus} />
           )}
         </div>
         <LimitsPanel lang={lang} />

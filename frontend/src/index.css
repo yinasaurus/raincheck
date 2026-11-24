@@ -34,11 +34,47 @@ h3,
   font-family: "Gabarito", sans-serif;
 }
 
+.site-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "brand lang"
+    "audience audience";
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.site-brand {
+  grid-area: brand;
+}
+
+.site-lang {
+  grid-area: lang;
+  justify-self: end;
+}
+
+.site-audience {
+  grid-area: audience;
+}
+
+@media (min-width: 40rem) {
+  .site-header {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas: "brand audience lang";
+  }
+
+  .site-lang {
+    justify-self: auto;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

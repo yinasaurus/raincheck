@@ -1,6 +1,12 @@
 # RainCheck
 
-Weather-adaptive loans for smallholder rice farmers. The rainfall record, the drought-stress proxy, and the risk API are in place, and a local contract can record a loan and one relief event per season. There is no dashboard yet.
+Weather-adaptive loans for smallholder rice farmers. The rainfall record, the drought-stress proxy, and the risk API are in place, and a local contract can record a loan and one relief event per season. The farmer and lender screens are in `frontend/`.
+
+```bash
+git clone https://github.com/yinasaurus/raincheck.git
+```
+
+A first setup takes about 10 minutes, and most of that is `pip install`.
 
 A farmer's payment changes only when observed seasonal rainfall is below a number agreed up front. The model estimates how likely that kind of season is. It cannot change what is owed.
 
@@ -20,8 +26,8 @@ raincheck/
     models/              # fitted model, metrics, held-out weekly scores
     tests/
   contracts/             # LoanRelief.sol, Hardhat tests, deploy
-  scripts/               # one command: local node, deploy, API
-  frontend/              # not built yet
+  scripts/               # one command: local node, deploy, API, and the screen
+  frontend/              # farmer and lender screens
 ```
 
 Default place: Nueva Ecija, Philippines, 15.58 N, 121.00 E, rice, June–October. Edit `backend/region.json` to move it. The season months have to sit inside one calendar year.
@@ -197,14 +203,13 @@ A dry day is under 1 mm. The longest spells in the three relief years were 13, 1
 
 ## Run it
 
-From `raincheck/backend`, with Python 3.11. The weather cache is already in the repo, so `ml.train` can be skipped when you only want to read it.
+From `raincheck/backend`, with Python 3.11. The weather cache is already in the repo, so `ml.train` can be skipped. Run it only when you want to rebuild `models/` from that cache. Expect the install below to take most of the 10 minutes.
 
 Windows PowerShell:
 
 ```powershell
 py -3.11 -m venv .venv
 .\.venv\Scripts\python -m pip install -r requirements.txt
-.\.venv\Scripts\python -m ml.train
 .\.venv\Scripts\python -m pytest
 .\.venv\Scripts\python -m uvicorn app.main:app --port 8000
 ```
@@ -214,12 +219,17 @@ macOS or Linux:
 ```bash
 python3.11 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
-.venv/bin/python -m ml.train
 .venv/bin/python -m pytest
 .venv/bin/python -m uvicorn app.main:app --port 8000
 ```
 
-`ml.train` downloads the Open-Meteo archive on the first run and writes `data/cache/`. Later runs use the cache, including offline. Set `FORCE_REFRESH_WEATHER=1` to download again. No API key is required. The risk routes do not read a chain key. `.env.example` has the local Hardhat URL and the public Hardhat oracle key, used only by the loan routes.
+To rebuild the model from the cache:
+
+```powershell
+.\.venv\Scripts\python -m ml.train
+```
+
+`ml.train` reads the weather cache in `data/cache/` and writes `models/`. That cache is already in the repo, including for an offline run. Set `FORCE_REFRESH_WEATHER=1` to download again. No API key is required. The risk routes do not read a chain key. `.env.example` has the local Hardhat URL and the public Hardhat oracle key, used only by the loan routes.
 
 Then open `http://127.0.0.1:8000/docs`.
 
@@ -228,7 +238,11 @@ The farmer and lender screens are in `frontend/`. From that folder:
 ```powershell
 npm install
 npm run dev
+npm test
+npx playwright test
 ```
+
+`npm test` runs the Vitest component tests. `npx playwright test` drives the screen in a browser. Playwright needs the screen on `http://127.0.0.1:5173` and the API on port 8000, which `scripts/dev.ps1` or `scripts/dev.sh` starts together.
 
 The dev server is `http://127.0.0.1:5173`. It reads `VITE_API_URL`, which defaults to `http://127.0.0.1:8000`. `GET /api/schedule/preview` is a what-if payment sketch. It does not call the chain.
 
@@ -272,7 +286,7 @@ macOS or Linux:
 ./scripts/dev.sh
 ```
 
-The script starts Hardhat, deploys `LoanRelief`, and serves the API and the farmer/lender screen. Closing it stops all three. Hardhat's accounts and keys are written to `contracts/node.log` and are not printed in the window. That log is gitignored. The oracle key in the script is Hardhat's published account #1. It only has coins on a fresh local node. If port 8545 is already open, the script stops instead of starting a second node. If port 5173 is already open, it prints the screen URL and leaves that process alone.
+The script starts Hardhat, deploys `LoanRelief`, and serves the API and the farmer/lender screen. Closing it stops the processes it started. Hardhat's accounts and keys are written to `contracts/node.log` and are not printed in the window. That log is gitignored. The oracle key in the script is Hardhat's published account #1. It only has coins on a fresh local node. If port 8545 or port 8000 is already open, the script does not start a second node or a second API. It prints the busy port, a `netstat` or `lsof` command and a kill command, and it still prints the three URLs below. If port 5173 is already open, it prints that too, leaves that process alone, and keeps going with the chain and the API.
 
 ```
 Frontend  http://127.0.0.1:5173
@@ -284,9 +298,9 @@ RPC       http://127.0.0.1:8545
 
 Open `http://127.0.0.1:5173`. English and Filipino use the same dictionary keys. The Filipino file is marked for review by a native speaker.
 
-The farmer screen has the three replay seasons (2004, 2017, 2020), week-by-week playback, rainfall so far against the normal, the projected season total against the 1,363.0 mm line, and the estimated chance of relief marked advisory only. At the end of the replay it states whether the next payments are lower or whether there is no relief. The example loan is PHP 100,000. A rainfall slider labelled simulation asks the schedule preview what would change. "See the public record" opens the lender screen for that loan.
+The farmer screen has the three replay seasons (2004, 2017, 2020), week-by-week playback, rainfall so far against the normal, the projected season total against the 1,363.0 mm line, and one chance of relief, marked advisory only. It does not show the automatic rule or a raw four-decimal probability. At the end of the replay it states whether the next payments are lower or whether there is no relief. The example loan is PHP 100,000. The slider labelled "Try a different season total (simulation)" starts at that season's final total, so 1,243.9 mm for 2004, and it resets when the season changes. At that total the result matches the banner. Moving it asks `GET /api/schedule/preview` what would change. "See the public record" opens the lender screen for that loan.
 
-The lender screen shows the loan terms and caps, the relief history, the transaction hash and the evidence hash with copy buttons, and Verify, which says Match or Mismatch. It also shows the model estimate beside the rule and the measured rainfall, the 26-season table, the rainfall trend with the payment line and the 10-year mean, and the model comparison. The note that only 3 of 26 seasons fell below the line sits on the table and again directly above the comparison.
+The lender screen shows the loan terms and caps, the relief history, the transaction hash and the evidence hash with copy buttons, and Verify, which says Match or Mismatch. "AI advises, rainfall decides" includes the current season status, the model estimate, the rule score, and those values as decimals. It also shows the 26-season table, the rainfall trend with the payment line and the 10-year mean, and the model comparison. The note that only 3 of 26 seasons fell below the line sits on the table and again directly above the comparison.
 
 The limits panel is open on the first visit and one click away after that. It stays in farmer language in both screens: a public record cannot prove the weather report, weather at the map point is not the farm, local test chain only, the drought mark is a proxy and only 3 of 26 seasons ended below the line, estimates are weak before about week 12, a season total can miss a dry spell, drought only, and this is a prototype and not a regulated product.
 
@@ -373,7 +387,9 @@ The API maps each history row with `relief_from_history_row`. The first event st
 
 ## Tests
 
-`pytest` from `backend/` covers weekly and monthly sums, season buckets, the SPI formula and the -1.0 cut, incomplete seasons, the 75% baseline, leave-one-year-out normals, the trigger (including the half-millimetre boundary), the Phase 1 API, the repayment schedule, the evidence hash, and the loan routes with a fake chain. The original Phase 1 tests are still in that run. The client, oracle, and API integration tests talk to a local Hardhat node and are skipped when port 8545 is closed.
+`pytest` from `backend/` covers weekly and monthly sums, season buckets, the SPI formula and the -1.0 cut, incomplete seasons, the 75% baseline, leave-one-year-out normals, the trigger (including the half-millimetre boundary), the Phase 1 API, the repayment schedule, the evidence hash, and the loan routes with a fake chain. The original Phase 1 tests are still in that run.
+
+Twelve tests talk to a live chain: five in `backend/tests/test_chain_integration.py`, one in `backend/tests/test_loans_integration.py`, and six in `backend/tests/test_oracle.py`. They run only when a Hardhat node is listening on `127.0.0.1:8545` and `backend/chain/deployment.json` exists. Start both with `.\scripts\dev.ps1` (or `./scripts/dev.sh`) from `raincheck/`, leave that window open, and in a second terminal run `python -m pytest` from `backend/`. That is 88 passed and 0 skipped. With either the node or the deployment file missing, those 12 are skipped and the rest still pass. A closed port is not the only reason they skip.
 
 From `contracts/`:
 

@@ -1,11 +1,11 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { fireEvent } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { en } from "./copy.en";
 import { fil } from "./copy.fil";
 import { FarmerView } from "./FarmerView";
 import { LimitsPanel } from "./LimitsPanel";
-import { BANNED_WORDS, firstChanged, formatAmount, formatMm, formatPercent, reducedWindow, reliefSentence, strictlyBelow } from "./numbers";
+import { BANNED_WORDS, firstChanged, formatAmount, formatMm, formatPercent, reducedWindow, reliefSentence, strictlyBelow, withoutRawProbability } from "./numbers";
 import { statusMessage } from "./status";
 import type { DemoRun } from "./types";
 
@@ -77,6 +77,32 @@ describe("farmer view", () => {
     );
   });
 
+  it("shows one chance, defaults the slider to the season total, and keeps the status block out", () => {
+    cleanup();
+    for (const lang of ["en", "fil"] as const) {
+      const view = render(<FarmerView {...props(lang, true)} />);
+      const root = within(view.container);
+      fireEvent.change(root.getByRole("slider", { name: lang === "fil" ? "Linggo" : "Week" }), { target: { value: "21" } });
+      const text = view.container.textContent ?? "";
+      expect(text).not.toContain(lang === "fil" ? "Awtomatikong tuntunin" : "Automatic rule");
+      expect(text).not.toMatch(/\d\.\d{4}/);
+      expect(text).toContain(lang === "fil" ? "Tsansa ng relief" : "Chance of relief");
+      expect(root.queryByRole("heading", { name: /Latest season|Current season|Where this year stands|Pinakabagong season|Katayuan ng kasalukuyang/ })).toBeNull();
+      const replay = view.container.querySelector("[data-testid='replay']");
+      expect(replay).not.toBeNull();
+      expect(view.container.innerHTML.indexOf("data-testid=\"replay\"")).toBeGreaterThan(-1);
+      expect(text.indexOf("2004")).toBeLessThan(text.indexOf(lang === "fil" ? "Subukan ang ibang kabuuang ulan" : "Try a different season total"));
+      const rainfall = root.getByRole("slider", { name: lang === "fil" ? "Kabuuang ulan sa katapusan ng season" : "End-of-season rainfall" }) as HTMLInputElement;
+      expect(rainfall.value).toBe("1243.9");
+      const banner = root.getByTestId("season-banner").textContent ?? "";
+      const whatIf = root.getByTestId("what-if").textContent ?? "";
+      expect(banner).toContain(lang === "fil" ? "30%" : "Your next 3 payments are 30% lower.");
+      expect(whatIf).toContain(lang === "fil" ? "30%" : "Your next 3 payments are 30% lower.");
+      view.unmount();
+    }
+    expect(withoutRawProbability("The chance is 0.9600. Rainfall is 90.0% of normal.")).toBe("Rainfall is 90.0% of normal.");
+  });
+
   it("shows the record-service message on 503 and plain words on 409", () => {
     const down = render(<FarmerView {...props("en", false)} runStatus={503} />);
     expect(down.container.textContent).toContain("The record service is not running");
@@ -106,8 +132,8 @@ function props(lang: "en" | "fil", relief: boolean) {
         rule_score: 0.5,
         projected_total_mm: { p10: 1200, p50: 1400, p90: 1600 },
         explanations: {
-          en: "By week 21, rainfall so far is 90.0% of normal. This score is advisory.",
-          fil: "Sa ika-21 na linggo, ang ulan sa ngayon ay 90.0% ng normal. Payo lamang ang markang ito.",
+          en: "By week 21, rainfall so far is 90.0% of normal. The chance the season total ends below the 1363.0 mm payment line is 0.9600. This score is advisory.",
+          fil: "Sa ika-21 na linggo, ang ulan sa ngayon ay 90.0% ng normal. Ang posibilidad ay 0.9600. Payo lamang ang markang ito.",
         },
       },
     ],
@@ -140,7 +166,7 @@ function props(lang: "en" | "fil", relief: boolean) {
     running: false,
     runStatus: null as number | null,
     demo,
-    risk: null,
+    seasonTotal: relief ? 1243.9 : 1653.8,
     paymentLine: 1363,
     onOpenRecord: () => undefined,
   };

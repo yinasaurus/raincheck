@@ -5,7 +5,7 @@ import { t, type Lang } from "./copy";
 import { useReducedMotion } from "./motion";
 import { isNumber, showChance, showMm } from "./numbers";
 import { statusMessage } from "./status";
-import type { BacktestBody, BacktestRow, DemoRun, EvidenceCheck } from "./types";
+import type { BacktestBody, BacktestRow, DemoRun, EvidenceCheck, RiskBody } from "./types";
 
 const SKILL_WEEKS = ["4", "8", "12", "16", "21"];
 type SortKey = "year" | "total" | "fired" | "alarm";
@@ -46,11 +46,13 @@ export function LenderView({
   lang,
   demo,
   backtest,
+  risk,
   runStatus,
 }: {
   lang: Lang;
   demo: DemoRun | null;
   backtest: BacktestBody | null;
+  risk: RiskBody | null;
   runStatus: number | null;
 }) {
   const reduce = useReducedMotion();
@@ -163,14 +165,24 @@ export function LenderView({
         <h2 id="advises-title" className="font-display font-bold text-water text-2xl">
           {t(lang, "advises")}
         </h2>
+        <h3 className="mt-3 font-display text-xl font-bold text-water">
+          {t(lang, "currentSeason")} {isNumber(risk?.season_year) ? risk.season_year : t(lang, "na")}
+        </h3>
+        <p className="mt-2 text-sm leading-6">{risk?.explanations?.[lang] || t(lang, "na")}</p>
         <dl className="mt-3 space-y-1 text-sm">
           <div>
             <dt>{t(lang, "modelRow")}</dt>
-            <dd>{showChance(end?.p_relief, lang)}</dd>
+            <dd>
+              {showChance(end?.p_relief, lang)}
+              {isNumber(end?.p_relief) ? ` (${end.p_relief.toFixed(4)})` : ""}
+            </dd>
           </div>
           <div>
             <dt>{t(lang, "ruleRow")}</dt>
-            <dd>{showChance(end?.rule_score, lang)}</dd>
+            <dd>
+              {showChance(end?.rule_score, lang)}
+              {isNumber(end?.rule_score) ? ` (${end.rule_score.toFixed(4)})` : ""}
+            </dd>
           </div>
           <div>
             <dt>{t(lang, "observedRow")}</dt>
