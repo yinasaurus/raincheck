@@ -101,11 +101,8 @@ export const en = {
   fired: "Below the line",
   falseAlarm: "False alarm",
   first: "First week at or above 0.5",
-  harvestCol: "Harvest t/ha (vs trend)",
-  harvestNote:
-    "Harvest is the Nueva Ecija rice yield for July to December, in tonnes per hectare, from the Philippine Statistics Authority. The percent compares each year with the rising trend.",
-  harvestBelow: "In {n} of the {m} seasons below the line, the harvest was at or above that trend.",
-  harvestScope: "This is the whole province, and most of it is irrigated. It does not change relief.",
+  harvestCol: "Yield vs trend",
+  harvestSource: "source: PhilRice PalayStat, not used by the model or the trigger",
   headline: "Mean Brier, no week 21",
   with21: "Mean Brier, with week 21",
   skill: "Brier skill",

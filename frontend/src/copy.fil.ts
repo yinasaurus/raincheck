@@ -105,11 +105,8 @@ export const fil = {
   fired: "Mas mababa sa linya",
   falseAlarm: "Maling alarma",
   first: "Unang linggo na umabot sa 0.5",
-  harvestCol: "Ani t/ha (kumpara sa uso)",
-  harvestNote:
-    "Ang ani ay ang ani ng palay sa Nueva Ecija mula Hulyo hanggang Disyembre, sa tonelada bawat ektarya, mula sa Philippine Statistics Authority. Inihahambing ng porsiyento ang bawat taon sa tumataas na uso.",
-  harvestBelow: "Sa {n} sa {m} na season na mas mababa sa linya, ang ani ay nasa o higit sa uso.",
-  harvestScope: "Buong lalawigan ito, at karamihan ay may patubig. Hindi nito binabago ang relief.",
+  harvestCol: "Ani kumpara sa uso",
+  harvestSource: "sanggunian: PhilRice PalayStat, hindi ginagamit ng modelo o ng trigger",
   headline: "Mean Brier, walang linggo 21",
   with21: "Mean Brier, kasama ang linggo 21",
   skill: "Brier skill",

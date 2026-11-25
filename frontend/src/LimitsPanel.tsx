@@ -3,7 +3,7 @@ import { limits, t, type Lang } from "./copy";
 
 const SEEN = "raincheck-limits-seen";
 
-export function LimitsPanel({ lang }: { lang: Lang }) {
+export function LimitsPanel({ lang, harvestLine }: { lang: Lang; harvestLine?: string | null }) {
   const [open, setOpen] = useState(() => {
     try {
       return sessionStorage.getItem(SEEN) !== "1";
@@ -42,6 +42,11 @@ export function LimitsPanel({ lang }: { lang: Lang }) {
           <li key={line}>{line}</li>
         ))}
       </ul>
+      {lang === "en" && harvestLine ? (
+        <p className="mt-3 text-sm leading-6" data-testid="harvest-farmer">
+          {harvestLine}
+        </p>
+      ) : null}
     </aside>
   );
 }

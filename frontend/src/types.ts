@@ -99,6 +99,28 @@ export interface RegionBody {
   limitations?: string[];
 }
 
+export interface ValidationYear {
+  year: number;
+  season_rainfall_mm?: number | null;
+  below_line?: boolean;
+  yield_deviation_pct?: number | null;
+  worst_yield?: boolean;
+}
+
+export interface ValidationBody {
+  source_name?: string;
+  source_url?: string;
+  retrieval_date?: string | null;
+  n?: number;
+  series?: ValidationYear[];
+  spearman?: { correlation?: number; interval_low?: number; interval_high?: number; excludes_zero?: boolean } | null;
+  worst_yield_years?: { year: number; yield_deviation_pct?: number | null; season_rainfall_mm?: number | null; below_line?: boolean }[];
+  sample_size_warning?: string;
+  limitations?: string[];
+  validation?: "SUPPORTS" | "MIXED" | "WEAK";
+  headline?: string;
+}
+
 export interface BacktestRow {
   year: number;
   season_total_mm?: number | null;

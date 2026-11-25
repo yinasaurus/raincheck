@@ -14,6 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.assistant import answer_question, llm_status, parse_whatif
 from app.service import NotReady, RainCheckService, SeasonNotFound
+from validation.report import build_validation
 
 app = FastAPI(
     title="RainCheck",
@@ -135,6 +136,17 @@ def simulate(body: SimulateBody) -> dict:
 @app.get("/api/backtest")
 def backtest() -> dict:
     return _call(service.backtest)
+
+
+@app.get("/api/validation")
+def validation() -> dict:
+    """Harvest comparison. It is not an input to relief."""
+
+    def build() -> dict:
+        report = service.backtest()
+        return build_validation(report["rows"], service.harvest)
+
+    return _call(build)
 
 
 @app.get("/api/demo/years")

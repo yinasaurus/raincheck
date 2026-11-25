@@ -18,6 +18,7 @@ from fastapi import HTTPException, Request
 
 from app.llm_client import LlmError, Provider, build_provider, gemini_key, scrub
 from app.semantic_guard import higher_total_sentence, semantic_failure, why_fact_sentences
+from validation.report import build_validation
 from chain.schedule import Relief, before_and_after
 
 logger = logging.getLogger("raincheck.assistant")
@@ -534,6 +535,7 @@ def build_facts(service, season: int, week: int, audience: str, evidence_prefix:
     _add(facts, "Seasons on record", report["n_seasons"])
     _add(facts, "Seasons below the line", report["n_positive_seasons"])
     _miss_facts(facts, service, report)
+    _validation_facts(facts, report, service.harvest)
     _add(facts, "Limit: estimate", "Estimates are rough before week 12.")
     _add(facts, "Limit: farm", "Weather at this map point is not the same as weather on one farm.")
     _add(facts, "Limit: prototype", "This is a prototype and a simulation. It is not a regulated lending product.")
@@ -541,6 +543,17 @@ def build_facts(service, season: int, week: int, audience: str, evidence_prefix:
         prefix = evidence_prefix if evidence_prefix and re.fullmatch(r"0x[0-9a-fA-F]{4,16}", evidence_prefix) else "not available"
         _add(facts, "Evidence prefix", prefix)
     return facts
+
+
+def _validation_facts(facts: list[dict], report: dict, harvest: dict | None) -> None:
+    """The harvest check is context for an explanation. It never decides relief."""
+    if not harvest:
+        return
+    check = build_validation(report["rows"], harvest)
+    _add(facts, "Harvest check", check["headline"])
+    _add(facts, "Harvest check result", check["validation"])
+    for index, line in enumerate(check["limitations"], start=1):
+        _add(facts, f"Harvest check limit {index}", line)
 
 
 def _miss_facts(facts: list[dict], service, report: dict) -> None:

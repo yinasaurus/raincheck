@@ -57,14 +57,20 @@ test("lender copy and verify", async ({ page }) => {
 
 test("the 26-season table shows the harvest beside each season", async ({ page }) => {
   await openFarmer(page);
+  await expect(page.getByTestId("harvest-farmer")).toContainText("only partly lined up");
   await page.getByRole("button", { name: "Lender and auditor" }).click();
-  await expect(page.getByTestId("harvest-2004")).toHaveText("4.44 (+12%)");
-  await expect(page.getByTestId("harvest-2017")).toHaveText("5.02 (+2%)");
+  await expect(page.getByTestId("harvest-2004")).toHaveText("+12%");
+  await expect(page.getByTestId("harvest-2017")).toHaveText("+2%");
   await expect(page.getByTestId("harvest-2026")).toHaveText("not available");
-  const note = page.getByTestId("harvest-note");
-  await expect(note).toContainText("Philippine Statistics Authority");
-  await expect(note).toContainText("In 3 of the 3 seasons below the line, the harvest was at or above that trend.");
-  await expect(note).toContainText("It does not change relief.");
+  await expect(page.getByTestId("harvest-source")).toHaveText("source: PhilRice PalayStat, not used by the model or the trigger");
+  const card = page.getByTestId("harvest-check");
+  await expect(card).toContainText("Does rainfall match real harvests?");
+  await expect(card).toContainText("only partly lined up");
+  await expect(card.getByRole("img")).toBeVisible();
+  await card.getByRole("button", { name: "View as table" }).click();
+  await expect(card.getByRole("table")).toContainText("2015");
+  await expect(card).toContainText("palaystat.philrice.gov.ph");
+  await expect(card).toContainText("The sample is small");
 });
 
 test("the farmer flow works from the keyboard", async ({ page }) => {

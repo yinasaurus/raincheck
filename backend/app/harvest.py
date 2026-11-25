@@ -10,6 +10,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from validation.analyze import deviation_percent
+
 
 def load_harvest(path: Path) -> dict | None:
     if not path.exists():
@@ -50,9 +52,7 @@ def harvest_rows(harvest: dict | None) -> dict[int, dict]:
     for year, value in yields.items():
         vs_trend = None
         if line is not None:
-            expected = line[0] * year + line[1]
-            if expected > 0:
-                vs_trend = round((value / expected - 1) * 100)
+            vs_trend = deviation_percent(value, line[0] * year + line[1])
         rows[year] = {"yield_t_per_ha": value, "vs_trend_pct": vs_trend}
     return rows
 

@@ -1,4 +1,4 @@
-import type { BacktestBody, DemoRun, DemoYear, EvidenceCheck, RegionBody, RiskBody, SchedulePreview, WeekRow } from "./types";
+import type { BacktestBody, DemoRun, DemoYear, EvidenceCheck, RegionBody, RiskBody, SchedulePreview, ValidationBody, WeekRow } from "./types";
 
 const BASE = (import.meta.env.VITE_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
 
@@ -48,6 +48,10 @@ export function getRegion(): Promise<RegionBody> {
 
 export function getBacktest(): Promise<BacktestBody> {
   return request("/api/backtest");
+}
+
+export function getValidation(): Promise<ValidationBody> {
+  return request("/api/validation");
 }
 
 export async function getRisk(): Promise<RiskBody> {

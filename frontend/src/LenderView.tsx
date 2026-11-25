@@ -3,10 +3,11 @@ import { AuditNote } from "./ask";
 import { getEvidence } from "./api";
 import { ChartSwitch, TrendChart } from "./charts";
 import { t, type Lang } from "./copy";
+import { HarvestCheck } from "./HarvestCheck";
 import { useReducedMotion } from "./motion";
-import { isNumber, showChance, showHarvest, showMm, strictlyBelow } from "./numbers";
+import { isNumber, showChance, showDeviation, showMm, strictlyBelow } from "./numbers";
 import { statusMessage } from "./status";
-import type { BacktestBody, BacktestRow, DemoRun, EvidenceCheck, RiskBody } from "./types";
+import type { BacktestBody, BacktestRow, DemoRun, EvidenceCheck, RiskBody, ValidationBody } from "./types";
 
 const SKILL_WEEKS = ["4", "8", "12", "16", "21"];
 type SortKey = "year" | "total" | "fired" | "alarm";
@@ -47,12 +48,14 @@ export function LenderView({
   lang,
   demo,
   backtest,
+  validation,
   risk,
   runStatus,
 }: {
   lang: Lang;
   demo: DemoRun | null;
   backtest: BacktestBody | null;
+  validation: ValidationBody | null;
   risk: RiskBody | null;
   runStatus: number | null;
 }) {
@@ -73,8 +76,6 @@ export function LenderView({
   const line = isNumber(demo?.rainfall_line?.trigger_rainfall_mm) ? demo.rainfall_line.trigger_rainfall_mm : backtest?.payment_line_mm;
   const year2017 = backtest?.rows?.find((row) => row.year === 2017);
   const year2020 = backtest?.rows?.find((row) => row.year === 2020);
-  const belowWithHarvest = (backtest?.rows ?? []).filter((row) => row.relief_fired && isNumber(row.harvest?.vs_trend_pct));
-  const belowAtOrAboveTrend = belowWithHarvest.filter((row) => (row.harvest?.vs_trend_pct as number) >= 0).length;
 
   const rows = useMemo(() => {
     const list = [...(backtest?.rows ?? [])];
@@ -239,27 +240,19 @@ export function LenderView({
                   <td className="py-1 pr-3">{row.first_week_p_relief_at_least_0_5 ?? t(lang, "na")}</td>
                   <td className="py-1">{row.false_alarm ? t(lang, "yes") : t(lang, "no")}</td>
                   <td className="py-1 pl-3" data-testid={`harvest-${row.year}`}>
-                    {showHarvest(row.harvest, lang)}
+                    {showDeviation(row.harvest?.vs_trend_pct, lang)}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        {backtest?.harvest ? (
-          <div className="mt-3 space-y-1 text-sm leading-6" data-testid="harvest-note">
-            <p>{t(lang, "harvestNote")}</p>
-            {belowWithHarvest.length ? (
-              <p>
-                {t(lang, "harvestBelow")
-                  .replace("{n}", String(belowAtOrAboveTrend))
-                  .replace("{m}", String(belowWithHarvest.length))}
-              </p>
-            ) : null}
-            <p className="text-muted">{t(lang, "harvestScope")}</p>
-          </div>
-        ) : null}
+        <p className="mt-3 text-sm leading-6 text-muted" data-testid="harvest-source">
+          {t(lang, "harvestSource")}
+        </p>
       </section>
+
+      {lang === "en" && validation?.headline ? <HarvestCheck report={validation} /> : null}
 
       <section className="rounded-2xl border border-line bg-panel p-4">
         <h2 className="font-display font-bold text-water text-2xl">{t(lang, "trend")}</h2>

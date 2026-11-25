@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { ApiError, getBacktest, getDemoYears, getRegion, getRisk, runDemo } from "./api";
+import { ApiError, getBacktest, getDemoYears, getRegion, getRisk, getValidation, runDemo } from "./api";
 import { t, type Lang } from "./copy";
 import { FarmerView } from "./FarmerView";
 import { LenderView } from "./LenderView";
 import { LimitsPanel } from "./LimitsPanel";
 import { isNumber } from "./numbers";
-import type { BacktestBody, DemoRun, DemoYear, RegionBody, RiskBody } from "./types";
+import type { BacktestBody, DemoRun, DemoYear, RegionBody, RiskBody, ValidationBody } from "./types";
 
 type Audience = "farmer" | "lender";
 
@@ -15,6 +15,7 @@ export default function App() {
   const [years, setYears] = useState<DemoYear[]>([]);
   const [region, setRegion] = useState<RegionBody | null>(null);
   const [backtest, setBacktest] = useState<BacktestBody | null>(null);
+  const [validation, setValidation] = useState<ValidationBody | null>(null);
   const [risk, setRisk] = useState<RiskBody | null>(null);
   const [loadStatus, setLoadStatus] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -25,9 +26,9 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.allSettled([getDemoYears(), getRegion(), getBacktest(), getRisk()]).then((results) => {
+    Promise.allSettled([getDemoYears(), getRegion(), getBacktest(), getRisk(), getValidation()]).then((results) => {
       if (cancelled) return;
-      const [yearResult, regionResult, backtestResult, riskResult] = results;
+      const [yearResult, regionResult, backtestResult, riskResult, validationResult] = results;
       if (yearResult.status === "fulfilled") {
         setYears(yearResult.value.years);
         setSelectedYear(yearResult.value.years[0]?.year ?? null);
@@ -35,6 +36,7 @@ export default function App() {
       if (regionResult.status === "fulfilled") setRegion(regionResult.value);
       if (backtestResult.status === "fulfilled") setBacktest(backtestResult.value);
       if (riskResult.status === "fulfilled") setRisk(riskResult.value);
+      if (validationResult.status === "fulfilled") setValidation(validationResult.value);
       const failed = results.find((result) => result.status === "rejected");
       if (failed && failed.status === "rejected") {
         setLoadStatus(failed.reason instanceof ApiError ? failed.reason.status : 0);
@@ -118,10 +120,13 @@ export default function App() {
               onOpenRecord={() => setAudience("lender")}
             />
           ) : (
-            <LenderView lang={lang} demo={demo} backtest={backtest} risk={risk} runStatus={runStatus} />
+            <LenderView lang={lang} demo={demo} backtest={backtest} validation={validation} risk={risk} runStatus={runStatus} />
           )}
         </div>
-        <LimitsPanel lang={lang} />
+        <LimitsPanel
+          lang={lang}
+          harvestLine={audience === "farmer" && (validation?.validation === "SUPPORTS" || validation?.validation === "MIXED") ? validation.headline : null}
+        />
       </main>
     </div>
   );
