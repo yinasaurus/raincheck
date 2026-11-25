@@ -86,6 +86,18 @@ The Rainy JUN-SEP column is not the sum of June, July, August, and September. On
 PalayStat (https://palaystat.philrice.gov.ph) was not downloaded. The Mendeley file already had rice and rainfall.
 GDHY was not downloaded.
 
-3. Earlier block, kept as a record
+3. Philippine Statistics Authority OpenSTAT, the committed Nueva Ecija file
+
+File: backend/data/harvest/nueva_ecija_palay.json
+Survey: Palay Production Survey, Nueva Ecija, as republished by PhilRice PalayStat (https://palaystat.philrice.gov.ph/).
+Downloaded 2026-11-24 from the OpenSTAT tables named in that file.
+Terms page: https://openstat.psa.gov.ph/Terms
+Read on 2026-11-25. A direct download from this machine returned HTTP 403, so the quotation is the text of that official page as published and indexed on that date, not a fresh copy of the HTML.
+
+"The statistical tables (or datasets) including documents (collectively as material) on this site are classified under Open Data with Creative Commons Attribution License (cc-by). This means that you are free to share (copy and redistribute) the material in any medium or format; remix, transform and build upon the material without any restrictions other than proper source attribution: 1. Attribution — you must give appropriate credit by acknowledging the Philippine Statistics Authority (PSA) or the source agency as indicated in the datasets, provide a link to this page, and indicate if changes were made. 2. No additional restrictions — you may not apply legal terms or technological measures that legally restrict others from doing anything the license permits."
+
+The same page points to the full licence at https://creativecommons.org/licenses/by/4.0/legalcode and says the material is provided as-is and as-available. The yield field in the committed file is a derived change: production divided by harvested area, rounded to 0.01 tonnes per hectare. The source and attribution fields in the JSON record that. The India table in backend/data/panel/india_district_year.csv is a different file. Its source and attribution fields name the Mendeley release above, not PSA.
+
+4. Earlier block, kept as a record
 
 data.icrisat.org did not connect from this machine on 2026-11-25. The VDSA copy at https://vdsa.icrisat.org/vdsa-requestData.aspx asks for an account. The July 2015 apportioned manual is in docs/all-apportioned-web-document.pdf. Its rainfall file has only annual rain, June, and July plus August. That manual was not the data table.

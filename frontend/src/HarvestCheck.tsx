@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { CartesianGrid, ReferenceLine, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis } from "recharts";
 import { ChartSwitch } from "./charts";
 import { showDeviation, showMm } from "./numbers";
@@ -7,14 +8,14 @@ const gold = "#D9A21B";
 const rain = "#3E91B5";
 const ink = "#12303B";
 
-function Dot(props: { cx?: number; cy?: number; payload?: ValidationYear }) {
-  const { cx = 0, cy = 0, payload } = props;
+function Dot(props: { cx?: number; cy?: number; payload?: ValidationYear; showYears?: boolean }) {
+  const { cx = 0, cy = 0, payload, showYears = false } = props;
   if (!payload) return <g />;
   const ring = payload.below_line;
   return (
     <g>
       <circle cx={cx} cy={cy} r={ring ? 8 : 4} fill={ring ? "none" : rain} stroke={ring ? gold : "none"} strokeWidth={2} />
-      {payload.worst_yield ? (
+      {showYears && payload.worst_yield ? (
         <text x={cx + 10} y={cy + 4} fill={ink} fontSize={12}>
           {payload.year}
         </text>
@@ -23,7 +24,20 @@ function Dot(props: { cx?: number; cy?: number; payload?: ValidationYear }) {
   );
 }
 
+function useWideScreen() {
+  const [wide, setWide] = useState(false);
+  useEffect(() => {
+    const query = window.matchMedia("(min-width: 768px)");
+    const apply = () => setWide(query.matches);
+    apply();
+    query.addEventListener("change", apply);
+    return () => query.removeEventListener("change", apply);
+  }, []);
+  return wide;
+}
+
 export function HarvestCheck({ report }: { report: ValidationBody }) {
+  const showYears = useWideScreen();
   const points = (report.series ?? []).filter((row) => row.yield_deviation_pct != null && row.season_rainfall_mm != null);
   const summary = [
     report.headline,
@@ -77,8 +91,8 @@ export function HarvestCheck({ report }: { report: ValidationBody }) {
                   <XAxis dataKey="season_rainfall_mm" type="number" name="Season rainfall" unit=" mm" tick={{ fill: ink, fontSize: 12 }} />
                   <YAxis dataKey="yield_deviation_pct" type="number" name="Yield vs trend" unit="%" tick={{ fill: ink, fontSize: 12 }} width={48} />
                   <Tooltip cursor={{ strokeDasharray: "3 3" }} />
-                  <ReferenceLine x={1363} stroke={gold} strokeWidth={2} label={{ value: "Payment line", fill: gold, fontSize: 12, position: "insideTopRight" }} />
-                  <Scatter data={points} shape={Dot} />
+                  <ReferenceLine x={1363} stroke={gold} strokeWidth={2} label={{ value: "Payment line", fill: ink, fontSize: 12, position: "insideTopRight" }} />
+                  <Scatter data={points} shape={(props: { cx?: number; cy?: number; payload?: ValidationYear }) => <Dot {...props} showYears={showYears} />} />
                 </ScatterChart>
               </ResponsiveContainer>
             </div>

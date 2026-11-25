@@ -123,10 +123,7 @@ export default function App() {
             <LenderView lang={lang} demo={demo} backtest={backtest} validation={validation} risk={risk} runStatus={runStatus} />
           )}
         </div>
-        <LimitsPanel
-          lang={lang}
-          harvestLine={audience === "farmer" && (validation?.validation === "SUPPORTS" || validation?.validation === "MIXED") ? validation.headline : null}
-        />
+        <LimitsPanel lang={lang} />
       </main>
     </div>
   );

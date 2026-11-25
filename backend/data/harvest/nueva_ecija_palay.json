@@ -905,6 +905,7 @@
     }
   },
   "source": "Philippine Statistics Authority, OpenSTAT, Palay Production Survey",
+  "attribution": "Philippine Statistics Authority OpenSTAT, Creative Commons Attribution 4.0, https://openstat.psa.gov.ph/Terms. Credit the Philippine Statistics Authority. Yield is production divided by harvested area, rounded to 0.01 tonnes per hectare. Retrieved 2026-11-24.",
   "tables": {
     "area_ha": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS/0022E4EAHC0.px",
     "production_t": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS/0012E4EVCP0.px"

@@ -17,7 +17,7 @@ from datetime import date, datetime, timezone
 from fastapi import HTTPException, Request
 
 from app.llm_client import LlmError, Provider, build_provider, gemini_key, scrub
-from app.semantic_guard import higher_total_sentence, semantic_failure, why_fact_sentences
+from app.semantic_guard import debt_not_erased_sentence, higher_total_sentence, semantic_failure, why_fact_sentences
 from validation.report import build_validation
 from chain.schedule import Relief, before_and_after
 
@@ -44,6 +44,13 @@ FARMER_BANNED = re.compile(
     re.IGNORECASE,
 )
 NUMBER = re.compile(r"\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?")
+AMOUNT = re.compile(
+    r"(?P<num>\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)"
+    r"(?:\s*(?P<unit>%|percent|mm|pesos?|php))?",
+    re.IGNORECASE,
+)
+MONEY_LABEL = re.compile(r"payment|repaid|cost|peso|php", re.IGNORECASE)
+CURRENCY_WORD = re.compile(r"\b(?:pesos?|php)\b", re.IGNORECASE)
 COMPLIANCE = re.compile(
     r"you qualify|relief is granted|changed your payment|system prompt|take (this|the) loan|i grant",
     re.IGNORECASE,
@@ -206,6 +213,43 @@ def numbers_in(text: str) -> list[str]:
     return [token.replace(",", "") for token in NUMBER.findall(text or "")]
 
 
+def _unit_name(raw: str | None) -> str:
+    unit = (raw or "").lower()
+    if unit == "percent":
+        return "%"
+    if unit in {"peso", "pesos", "php"}:
+        return "peso"
+    return unit
+
+
+def amounts_in(text: str) -> list[tuple[str, str]]:
+    """Each number with the unit written next to it. An empty unit means digits only."""
+    found = []
+    for match in AMOUNT.finditer(text or ""):
+        found.append((match.group("num").replace(",", ""), _unit_name(match.group("unit"))))
+    return found
+
+
+def _amount_allowed(number: str, unit: str, allowed: list[tuple[str, str]]) -> bool:
+    for fact_number, fact_unit in allowed:
+        if not _same_number(number, fact_number):
+            continue
+        if unit == "" or unit == fact_unit:
+            return True
+    return False
+
+
+def allowed_amounts(facts: list[dict]) -> list[tuple[str, str]]:
+    found = []
+    for item in facts:
+        label = str(item["label"])
+        for number, unit in amounts_in(str(item["value"])):
+            if unit == "" and MONEY_LABEL.search(label):
+                unit = "peso"
+            found.append((number, unit))
+    return found
+
+
 def _same_number(left: str, right: str) -> bool:
     if left == right:
         return True
@@ -223,11 +267,23 @@ def allowed_numbers(facts: list[dict]) -> list[str]:
 
 
 def numbers_ok(answer: str, facts: list[dict]) -> bool:
-    allowed = allowed_numbers(facts)
-    for token in numbers_in(answer):
-        if not any(_same_number(token, candidate) for candidate in allowed):
+    """A number is allowed only with a matching fact. A written unit has to match that fact's unit."""
+    allowed = allowed_amounts(facts)
+    for number, unit in amounts_in(answer):
+        if not _amount_allowed(number, unit, allowed):
             return False
     return True
+
+
+def repeats_unlisted_currency(answer: str, question: str, facts: list[dict]) -> bool:
+    """A peso or PHP amount in the question that is not a fact must not reappear, even as a word on another number."""
+    asked = [number for number, unit in amounts_in(question) if unit == "peso"]
+    if not asked:
+        return False
+    allowed = allowed_amounts(facts)
+    if all(_amount_allowed(number, "peso", allowed) for number in asked):
+        return False
+    return CURRENCY_WORD.search(answer or "") is not None
 
 
 def words_ok(answer: str, audience: str) -> bool:
@@ -624,13 +680,13 @@ def _miss_facts(facts: list[dict], service, report: dict) -> None:
     )
 
 
-def guard_failure(answer: str, facts: list[dict], audience: str, intent: str) -> str | None:
+def guard_failure(answer: str, facts: list[dict], audience: str, intent: str, question: str = "") -> str | None:
     """Why an answer is discarded. None means the guards accept it."""
     if not answer or len(answer) > ANSWER_CAP:
         return "empty-or-length"
     if gemini_key() and gemini_key() in answer:
         return "secret"
-    if not numbers_ok(answer, facts):
+    if not numbers_ok(answer, facts) or repeats_unlisted_currency(answer, question, facts):
         return "number-check"
     if not words_ok(answer, audience):
         return "forbidden-word"
@@ -731,15 +787,21 @@ def answer_question(service, body, request: Request) -> dict:
     except LlmError:
         return _finish(template_answer(intent, facts, audience), facts, "template", BUSY_NOTE, intent)
 
-    reason = guard_failure(draft, facts, audience, intent)
+    reason = guard_failure(draft, facts, audience, intent, question)
     if reason == "semantic:why-missing":
         extra = why_fact_sentences(draft, facts)
         if extra:
             return _complete(question, draft, extra, facts, intent, key)
     if reason == "semantic:payment-missing":
+        extra = []
         higher = higher_total_sentence(draft, facts)
         if higher:
-            return _complete(question, draft, [higher], facts, intent, key)
+            extra.append(higher)
+        erased = debt_not_erased_sentence(draft, facts)
+        if erased:
+            extra.append(erased)
+        if extra:
+            return _complete(question, draft, extra, facts, intent, key)
     if reason is None and intent == "miss" and not _miss_years_stated(draft, facts, question):
         reason = "semantic:miss-missing"
     if reason is not None:

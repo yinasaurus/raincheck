@@ -197,6 +197,29 @@ def higher_total_sentence(answer: str, facts: list[dict]) -> str | None:
     )
 
 
+def debt_not_erased_sentence(answer: str, facts: list[dict]) -> str | None:
+    """The verified debt sentence when a true payment answer left it out. None means do not append."""
+    if not _fact(facts, "Relief status").startswith("Relief applied"):
+        return None
+    text = answer or ""
+    if re.search(r"does not erase", text, re.IGNORECASE):
+        return None
+    if re.search(r"debt is cancelled|debt is canceled|is forgiven|is waived", text, re.IGNORECASE):
+        return None
+    unchanged = re.search(
+        r"number of (?:your |the )?payments does not change|"
+        r"does not change the (?:total )?number of (?:your |the )?payments|"
+        r"number of payments stays the same|same number of payments|not pay fewer",
+        text,
+        re.IGNORECASE,
+    )
+    if unchanged is None or re.search(r"next 3 payments", text, re.IGNORECASE) is None:
+        return None
+    if re.search(r"30\s*%", text) is None:
+        return None
+    return "Relief does not erase the debt."
+
+
 def states_why_relief_did_or_did_not_apply(answer: str, facts: list[dict]) -> bool:
     """A why-relief answer has to show the season total, the payment line, and the strictly-below result."""
     if not _has_fact_number(answer, _fact(facts, "Season total")):
@@ -224,6 +247,8 @@ def states_how_payments_change(answer: str, facts: list[dict]) -> bool:
     if re.search(r"next 3 payments", text, re.IGNORECASE) is None:
         return False
     if re.search(r"30\s*%", text) is None:
+        return False
+    if re.search(r"does not erase", text, re.IGNORECASE) is None:
         return False
     return (
         re.search(r"slightly higher|total repaid is higher|total repaid goes up|extra cost", text, re.IGNORECASE)

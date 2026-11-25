@@ -99,6 +99,11 @@ def main() -> int:
         }
     payload = {
         "source": "Philippine Statistics Authority, OpenSTAT, Palay Production Survey",
+        "attribution": (
+            "Philippine Statistics Authority OpenSTAT, Creative Commons Attribution 4.0, "
+            "https://openstat.psa.gov.ph/Terms. Credit the Philippine Statistics Authority. "
+            "Yield is production divided by harvested area, rounded to 0.01 tonnes per hectare."
+        ),
         "tables": {name: API + table for name, table in TABLES.items()},
         "province": "Nueva Ecija",
         "fetched_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),

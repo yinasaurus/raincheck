@@ -11,6 +11,8 @@ from validation.analyze import (
     deviation_percent,
     headline,
     limitations,
+    ORIGINAL_HEADLINES,
+    verdict_v2,
     median,
     verdict,
     worst_years,
@@ -45,7 +47,9 @@ def build_validation(rainfall_rows: list[dict], harvest: dict | None) -> dict:
     )
     dry_lower = below_line_is_lower(dry, others)
     excludes_zero = bool(correlation and correlation["excludes_zero"])
-    code = verdict(dry_lower, excludes_zero)
+    signed = None if not correlation else correlation["correlation"]
+    code_v1 = verdict(dry_lower, excludes_zero)
+    code = verdict_v2(dry_lower, signed, excludes_zero)
     covered = sorted(yields)
     worst = worst_years(series)
     worst_ids = {row["year"] for row in worst}
@@ -82,8 +86,15 @@ def build_validation(rainfall_rows: list[dict], harvest: dict | None) -> dict:
         ],
         "sample_size_warning": limitations(len(paired), sum(1 for row in paired if row["below_line"]))[0],
         "limitations": limitations(len(paired), sum(1 for row in paired if row["below_line"])),
+        "rule_version": "v2",
         "validation": code,
         "headline": headline(code),
+        "original_rule": {
+            "version": "v1",
+            "name": "original rule output (sign-blind)",
+            "validation": code_v1,
+            "headline": ORIGINAL_HEADLINES[code_v1],
+        },
     }
 
 

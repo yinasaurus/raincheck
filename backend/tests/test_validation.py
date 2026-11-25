@@ -1,7 +1,17 @@
 from fastapi.testclient import TestClient
 
 from app.main import app
-from validation.analyze import HEADLINES, MIXED, SUPPORTS, WEAK, below_line_is_lower, verdict
+from validation.analyze import (
+    HEADLINES,
+    MIXED,
+    OPPOSITE,
+    ORIGINAL_HEADLINES,
+    SUPPORTS,
+    WEAK,
+    below_line_is_lower,
+    verdict,
+    verdict_v2,
+)
 from validation.report import build_validation
 
 
@@ -18,10 +28,18 @@ def test_each_headline_wording_is_chosen_by_the_two_rules():
     assert verdict(True, False) == MIXED
     assert verdict(False, True) == MIXED
     assert verdict(False, False) == WEAK
-    assert set(HEADLINES) == {SUPPORTS, MIXED, WEAK}
-    assert "lined up with the dry seasons" in HEADLINES[SUPPORTS]
-    assert "only partly lined up" in HEADLINES[MIXED]
-    assert "did not line up" in HEADLINES[WEAK]
+    assert set(ORIGINAL_HEADLINES) == {SUPPORTS, MIXED, WEAK}
+    assert "only partly lined up" in ORIGINAL_HEADLINES[MIXED]
+    assert verdict_v2(True, 0.4, True) == SUPPORTS
+    assert verdict_v2(True, 0.4, False) == MIXED
+    assert verdict_v2(False, 0.4, True) == MIXED
+    assert verdict_v2(True, -0.4, True) == MIXED
+    assert verdict_v2(False, -0.4, True) == OPPOSITE
+    assert verdict_v2(False, 0.01, False) == WEAK
+    assert set(HEADLINES) == {SUPPORTS, MIXED, WEAK, OPPOSITE}
+    assert "not a proven predictor" in HEADLINES[OPPOSITE]
+    assert "lined up" not in HEADLINES[OPPOSITE]
+    assert "only partly" not in " ".join(HEADLINES.values())
 
 
 def test_a_lower_dry_year_median_is_the_supports_half_of_the_rule():
@@ -58,6 +76,19 @@ def test_the_saved_numbers_can_produce_each_wording():
     assert weak["validation"] == WEAK
     assert weak["headline"] == HEADLINES[WEAK]
 
+    rainfall = []
+    yields = []
+    for index, year in enumerate(range(2001, 2021)):
+        low = index % 2 == 0
+        rainfall.append((year, 1100 if low else 1900, low))
+        yields.append((year, 4.0 + index * 0.02 + (0.9 if low else -0.9)))
+    opposite = build_validation(_rows(rainfall), _harvest(yields))
+    assert opposite["validation"] == OPPOSITE
+    assert opposite["headline"] == HEADLINES[OPPOSITE]
+    assert opposite["spearman"]["correlation"] < 0
+    assert opposite["original_rule"]["validation"] == MIXED
+    assert opposite["original_rule"]["name"] == "original rule output (sign-blind)"
+
 
 def test_a_year_with_no_harvest_is_null():
     missing = build_validation(
@@ -75,8 +106,15 @@ def test_the_live_check_uses_the_saved_survey_and_leaves_2026_blank():
     assert body["source_url"] == "https://palaystat.philrice.gov.ph/"
     assert body["retrieval_date"] == "2026-11-24"
     assert body["n"] == 25
-    assert body["validation"] in HEADLINES
-    assert body["headline"] == HEADLINES[body["validation"]]
+    assert body["rule_version"] == "v2"
+    assert body["validation"] == OPPOSITE
+    assert body["headline"] == HEADLINES[OPPOSITE]
+    assert body["spearman"]["correlation"] == -0.456
+    assert body["spearman"]["interval_low"] == -0.712
+    assert body["spearman"]["interval_high"] == -0.074
+    assert body["original_rule"]["version"] == "v1"
+    assert body["original_rule"]["validation"] == MIXED
+    assert "only partly lined up" in body["original_rule"]["headline"]
     series = {row["year"]: row for row in body["series"]}
     assert series[2026]["yield_deviation_pct"] is None
     assert series[2026]["season_rainfall_mm"] is not None

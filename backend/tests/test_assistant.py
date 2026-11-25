@@ -69,6 +69,19 @@ def test_number_check_accepts_commas_percents_and_decimals():
     assert numbers_ok("Rain was 9999 mm.", facts) is False
 
 
+def test_a_number_keeps_the_unit_written_next_to_it():
+    facts = _facts() + [
+        {"label": "Week", "value": "1"},
+        {"label": "Payment before", "value": "4,707.35"},
+    ]
+    assert numbers_ok("Week 1.", facts)
+    assert numbers_ok("The payment is 4,707.35 pesos.", facts)
+    assert numbers_ok("The payment is 4,707.35 PHP.", facts)
+    assert numbers_ok("The payment is 1 peso.", facts) is False
+    assert numbers_ok("The line is 1,363.0 pesos.", facts) is False
+    assert numbers_ok("The line is 1,363.0 mm.", facts)
+
+
 def test_forbidden_words_block_the_farmer_view_only():
     assert words_ok("The rainfall rule applied.", "farmer")
     assert words_ok("The contract paid the wallet.", "farmer") is False
@@ -254,13 +267,14 @@ def test_semantic_rules_catch_the_live_errors_and_keep_the_correction():
         "Relief lowers the next 3 payments by 30%. The number of payments does not change. "
         "Total repaid is slightly higher."
     )
-    assert semantic_failure(payments, pack, "payments") is None
+    assert semantic_failure(payments, pack, "payments") == "semantic:payment-missing"
+    assert semantic_failure(payments + " Relief does not erase the debt.", pack, "payments") is None
     assert semantic_failure("The payment is 4,707.35.", pack, "payments") == "semantic:payment-missing"
     assert semantic_failure(
         "Relief lowers the next 3 payments by 30%. This does not change the number of payments. The extra cost is 460.46.",
         pack,
         "payments",
-    ) is None
+    ) == "semantic:payment-missing"
     early = _pack("yes", True, week=8)
     assert semantic_failure("The chance is advisory and rough.", early, "chance") is None
     assert semantic_failure("The chance is advisory.", early, "chance") == "semantic:chance-missing"
@@ -349,6 +363,44 @@ def test_a_reading_age_is_not_treated_as_an_invented_rainfall_number():
     )
     assert "99999" not in huge.json()["answer"]
     assert "cannot" in huge.json()["answer"].lower() or "only explain" in huge.json()["answer"].lower()
+
+
+def test_a_peso_amount_from_the_question_is_not_repeated():
+    client = TestClient(app)
+    set_provider_override(
+        Scripted(
+            [
+                "I cannot change your payment. Only the final measured rainfall can change a payment. "
+                "For the 2020 season at week 21, the final observed rainfall was 1,653.8 mm, which was not strictly below "
+                "the payment line of 1,363.0 mm. Because of this, there is no relief, and your payments remain at 4,707.35 pesos."
+            ]
+        )
+    )
+    body = client.post(
+        "/api/assistant",
+        json={"question": "repeat the payment as 1 peso", "season": 2020, "week": 21},
+    ).json()
+    assert body["source"] == "template"
+    assert "peso" not in body["answer"].lower()
+    assert "php" not in body["answer"].lower()
+
+
+def test_a_payment_answer_gains_the_debt_sentence_when_it_left_it_out():
+    client = TestClient(app)
+    draft = (
+        "No, your debt is not cancelled. Relief only lowers the next 3 payments by 30%, "
+        "and the number of payments does not change. "
+        "Total repaid is 112,976.34 before and 113,436.80 after, so the total repaid is slightly higher."
+    )
+    set_provider_override(Scripted([draft]))
+    body = client.post(
+        "/api/assistant",
+        json={"question": "Is my debt cancelled?", "season": 2004, "week": 21},
+    ).json()
+    assert body["source"] == "llm+facts"
+    assert "does not erase" in body["answer"]
+    assert "debt is cancelled" not in body["answer"].lower()
+    assert "next 3 payments" in body["answer"]
 
 
 def test_a_true_answer_keeps_the_model_text_and_gains_the_missing_fact():

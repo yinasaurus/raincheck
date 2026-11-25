@@ -14,11 +14,33 @@ SOURCE_URL = "https://palaystat.philrice.gov.ph/"
 SUPPORTS = "SUPPORTS"
 MIXED = "MIXED"
 WEAK = "WEAK"
+OPPOSITE = "OPPOSITE"
 
-HEADLINES = {
+# v1 did not look at the sign. Kept so the original output can be shown beside v2.
+ORIGINAL_HEADLINES = {
     SUPPORTS: "Past harvest records for this province lined up with the dry seasons in the data.",
     MIXED: "Past harvest records for this province only partly lined up with the dry seasons in the data.",
     WEAK: "Past harvest records for this province did not line up with the dry seasons in the data.",
+}
+
+HEADLINES = {
+    SUPPORTS: (
+        "In past harvest records for this province, the seasons below the payment line had lower yields, "
+        "and wetter seasons tended to have higher yields."
+    ),
+    MIXED: (
+        "In past harvest records for this province, the two harvest checks do not agree. "
+        "This rainfall line is not a proven predictor of yield loss here."
+    ),
+    WEAK: (
+        "In past harvest records for this province, the seasons below the payment line did not have lower yields, "
+        "and this sample does not show a clear link between rainfall and yield."
+    ),
+    OPPOSITE: (
+        "In past harvest records for this province, the seasons below the payment line did not have lower yields, "
+        "and wetter seasons tended to have lower yields. "
+        "This rainfall line is not a proven predictor of yield loss here."
+    ),
 }
 
 BOOTSTRAP_DRAWS = 1000
@@ -130,10 +152,23 @@ def below_line_is_lower(below: list[float], others: list[float]) -> bool:
 
 
 def verdict(dry_years_are_lower: bool, interval_excludes_zero: bool) -> str:
-    """SUPPORTS needs both checks. MIXED is exactly one. WEAK is neither."""
+    """v1, sign-blind. SUPPORTS needs both checks. MIXED is exactly one. WEAK is neither."""
     if dry_years_are_lower and interval_excludes_zero:
         return SUPPORTS
     if dry_years_are_lower or interval_excludes_zero:
+        return MIXED
+    return WEAK
+
+
+def verdict_v2(dry_years_are_lower: bool, correlation: float | None, interval_excludes_zero: bool) -> str:
+    """v2 reads the sign. A negative link plus dry years that are not lower is OPPOSITE."""
+    negative = bool(interval_excludes_zero and correlation is not None and correlation < 0)
+    positive = bool(interval_excludes_zero and correlation is not None and correlation > 0)
+    if (not dry_years_are_lower) and negative:
+        return OPPOSITE
+    if dry_years_are_lower and positive:
+        return SUPPORTS
+    if dry_years_are_lower or positive or negative:
         return MIXED
     return WEAK
 

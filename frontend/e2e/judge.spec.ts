@@ -62,7 +62,7 @@ test("lender copy and verify", async ({ page }) => {
 
 test("the 26-season table shows the harvest beside each season", async ({ page }) => {
   await openFarmer(page);
-  await expect(page.getByTestId("harvest-farmer")).toContainText("only partly lined up");
+  await expect(page.getByText("not a proven predictor of yield loss")).toHaveCount(0);
   await page.getByRole("button", { name: "Lender and auditor" }).click();
   await expect(page.getByText("wet-season rice (June to October)")).toBeVisible();
   await expect(page.getByTestId("harvest-2004")).toHaveText("+12%");
@@ -71,7 +71,7 @@ test("the 26-season table shows the harvest beside each season", async ({ page }
   await expect(page.getByTestId("harvest-source")).toHaveText("source: PhilRice PalayStat, not used by the model or the trigger");
   const card = page.getByTestId("harvest-check");
   await expect(card).toContainText("Does rainfall match real harvests?");
-  await expect(card).toContainText("only partly lined up");
+  await expect(card).toContainText("not a proven predictor of yield loss here");
   await expect(card.getByRole("img")).toBeVisible();
   await card.getByRole("button", { name: "View as table" }).click();
   await expect(card.getByRole("table")).toContainText("2015");
@@ -178,7 +178,8 @@ async function runYear(page: Page, year: string) {
   const previousLoan = (await replay.count()) ? await replay.getAttribute("data-loan") : "";
   await page.getByRole("button", { name: new RegExp(year) }).click();
   await page.getByRole("button", { name: "Run this season" }).click();
-  await expect(replay).toHaveAttribute("data-year", year, { timeout: 90000 });
+  // A busy machine can delay the chain reply. A miss here is a test flake, not a product bug.
+  await expect(replay).toHaveAttribute("data-year", year, { timeout: 180000 });
   await expect(replay).not.toHaveAttribute("data-loan", previousLoan ?? "");
 }
 

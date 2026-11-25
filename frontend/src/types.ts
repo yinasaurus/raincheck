@@ -117,8 +117,10 @@ export interface ValidationBody {
   worst_yield_years?: { year: number; yield_deviation_pct?: number | null; season_rainfall_mm?: number | null; below_line?: boolean }[];
   sample_size_warning?: string;
   limitations?: string[];
-  validation?: "SUPPORTS" | "MIXED" | "WEAK";
+  validation?: "SUPPORTS" | "MIXED" | "WEAK" | "OPPOSITE";
   headline?: string;
+  rule_version?: string;
+  original_rule?: { version?: string; name?: string; validation?: string; headline?: string };
 }
 
 export interface BacktestRow {
