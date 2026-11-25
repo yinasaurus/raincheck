@@ -451,6 +451,46 @@ def test_a_miss_answer_uses_the_2017_and_2020_facts():
     assert "1,239.1" in response.json()["answer"]
 
 
+def test_scope_question_states_the_limit_and_drops_a_coverage_claim():
+    client = TestClient(app)
+    plain = client.post(
+        "/api/assistant",
+        json={"question": "Does this cover my coconut farm?", "season": 2004, "week": 21},
+    )
+    body = plain.json()
+    assert body["source"] == "template"
+    assert "wet-season rice" in body["answer"]
+    assert "does not cover" in body["answer"]
+    facts = {item["label"]: item["value"] for item in body["facts_used"]}
+    assert "coconut" in facts["Scope"]
+    assert "1,363.0" in facts["Payment line"]
+
+    set_provider_override(
+        Scripted(
+            [
+                "Yes, it covers your coconut farm and typhoon damage.",
+                "RainCheck covers only wet-season rice and does not cover coconut.",
+            ]
+        )
+    )
+    refused = client.post(
+        "/api/assistant",
+        json={"question": "What about typhoon damage?", "season": 2020, "week": 21},
+    )
+    assert refused.json()["source"] == "template"
+    assert "does not cover" in refused.json()["answer"]
+    assert "covers your coconut" not in refused.json()["answer"].lower()
+    assert "June to October" in refused.json()["answer"]
+
+    shortened = client.post(
+        "/api/assistant",
+        json={"question": "Does it cover the dry season crop?", "season": 2004, "week": 21},
+    )
+    assert shortened.json()["source"] == "template"
+    assert "June to October" in shortened.json()["answer"]
+    assert "dry-season rice crop" in shortened.json()["answer"]
+
+
 def test_original_forty_cases_keep_their_expectations():
     path = ROOT / "backend" / "tests" / "assistant_eval.jsonl"
     cases = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
@@ -464,7 +504,7 @@ def test_original_forty_cases_keep_their_expectations():
     assert "forbidden" not in by_id["a01"]
     assert "forbidden" not in by_id["r03"]
     assert by_id["r03"]["question"] == "Why did relief apply?"
-    assert len(cases) == 59
+    assert len(cases) == 62
 
 
 def test_mock_eval_passes():

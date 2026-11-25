@@ -1,0 +1,91 @@
+Panel data sources
+Retrieval date: 2026-11-25
+
+The gate opened on route (a). Route (b), the Central Luzon PalayStat tables, was not started. Route (c), GDHY, was not started. The ICRISAT website at data.icrisat.org still did not connect from this machine. The file below came from Mendeley Data instead.
+
+1. Mendeley Data, the file that was used
+
+Title: ICRISAT District-Level Data: Heterogeneous Climate Effect on Crop Yield and Associated Risks to Water Security in India
+Version 1, published 11 July 2023
+DOI: 10.17632/ywp3y5j9vv.1
+URL: https://data.mendeley.com/datasets/ywp3y5j9vv
+Contributor: Souryabrata Mohapatra, University of Auckland
+License: Creative Commons Attribution 4.0 International, http://creativecommons.org/licenses/by/4.0
+The Mendeley record says the dataset may be shared, copied, and modified with attribution, a link to the license, and a note of changes, and that further permission may be needed for third-party content inside it.
+
+Citation: Mohapatra, S. (2023). ICRISAT District-Level Data: Heterogeneous Climate Effect on Crop Yield and Associated Risks to Water Security in India (Version 1) [Data set]. Mendeley Data. https://doi.org/10.17632/ywp3y5j9vv.1
+
+ICRISAT source, as stated on that record: unapportioned district-level data collected by the International Crops Research Institute for the Semi-Arid Tropics. The record says 560 districts, 20 states, 1990 to 2015. This is not the 1966-boundary apportioned database. Districts split and new states appear inside the years (Telangana, Chhattisgarh, Jharkhand, Uttarakhand are separate state names in the file).
+
+One file. Downloaded 2026-11-25 from
+https://data.mendeley.com/public-files/datasets/ywp3y5j9vv/files/e3dfd63e-abf7-4417-9331-27c574e035b9/file_downloaded
+Saved locally as backend/data/panel/raw/icrisat_mendeley.xls
+Original name: main merge (droped _merge==2) (560 dist 1990-2015).xls
+Size: 23,739,904 bytes
+SHA-256 published by Mendeley: e972b837b29298b8f06cda6fe7ea982d90a7a97a66e9a07fc72df3b66680318d
+Sheet: Sheet1. Rows read: 12,803. Years: 1990 to 2015. Districts: 560. States: 20.
+
+Columns, in file order:
+Dist Code
+Year
+State Code
+State Name
+Dist Name
+RICE AREA (1000 ha)
+RICE PRODUCTION (1000 tons)
+RICE YIELD (Kg per ha)
+PEARL MILLET AREA (1000 ha)
+PEARL MILLET PRODUCTION (1000 tons)
+PEARL MILLET YIELD (Kg per ha)
+CHICKPEA AREA (1000 ha)
+CHICKPEA PRODUCTION (1000 tons)
+CHICKPEA YIELD (Kg per ha)
+GROUNDNUT AREA (1000 ha)
+GROUNDNUT PRODUCTION (1000 tons)
+GROUNDNUT YIELD (Kg per ha)
+SUGARCANE AREA (1000 ha)
+SUGARCANE PRODUCTION (1000 tons)
+SUGARCANE YIELD (Kg per ha)
+GROSS CROPPED AREA (1000 ha)
+NITROGEN CONSUMPTION (tons)
+PHOSPHATE CONSUMPTION (tons)
+POTASH CONSUMPTION (tons)
+TOTAL FERTILISER CONSUMPTION (tons)
+TOTAL AGRICULTURAL LABOUR POPULATION (1000 Number)
+GROSS IRRIGATED AREA (1000 ha)
+JANUARY through DECEMBER MAXIMUM TEMPERATURE (Centigrate), then Winter JAN-FEB, Summer MAR-MAY, Rainy JUN-SEP, Autumn OCT-DEC
+JANUARY through DECEMBER MINIMUM TEMPERATURE (Centigrate), then the same four seasons
+JANUARY through DECEMBER PERCIPITATION (Millimeters), then Winter JAN-FEB, Summer MAR-MAY, Rainy JUN-SEP, Autumn OCT-DEC
+JANUARY through DECEMBER ACTUAL EVAPOTRANSPIRATION (Millimeters), then the same four seasons
+JAN, FEB, MARCH, APRIL, MAY, JUNE, JULY, AUG, SEPT, OCT, NOV, DEC WINDSPEED (Meter per second), then the same four seasons
+
+The month names are spelled out in the file for temperature, precipitation, and evapotranspiration. Wind speed uses the abbreviations above. "PERCIPITATION" and "Centigrate" are the spellings in the header.
+
+Required fields, all present:
+Rice yield: RICE YIELD (Kg per ha). Also rice area and rice production, both in thousands, so production divided by area is tonnes per hectare. The stored yield matches that conversion within about 0.3 kg per hectare on the median, which is rounding. The study uses the stored yield column.
+Rainfall: the twelve monthly precipitation columns, millimeters.
+Year: Year. District id: Dist Code.
+
+Preferred irrigation field, present but not rice-specific: GROSS IRRIGATED AREA (1000 ha). There is no rice-irrigated-area column.
+
+Missingness in the 12,803 rows, counted from the file, with no filling:
+Dist Code, Year, State Code, State Name, Dist Name: 0 blank.
+RICE AREA: 52 blank. RICE PRODUCTION: 50 blank. RICE YIELD: 52 blank. No cell is -1.
+GROSS CROPPED AREA: 445 blank.
+GROSS IRRIGATED AREA: 1,153 blank and 730 cells equal to -1. Those -1 cells are missing.
+Each of June, July, August, September precipitation, and the Rainy JUN-SEP column: 148 blank. No -1.
+Rice area above zero: 11,970 rows. Rice yield above zero: 11,969 rows.
+Rows with rice area and yield above zero and all four monsoon months present and at least zero: 11,805 rows, 531 districts.
+Of those, rows that also have a usable irrigation share: 10,139 rows, 523 districts. The share exceeds 1 in 66 of them and exceeds 2 in 3. They are kept.
+Years up to 2007 in that irrigation sample: 6,923 rows, 493 districts. 425 districts have at least 8 such early years. Years from 2008 on: 3,216 rows, 467 districts.
+
+The Rainy JUN-SEP column is not the sum of June, July, August, and September. On 12,655 rows where both exist, the median absolute gap is 639 mm. The study sums the four months and does not use the rainy-season column.
+
+2. Routes not used
+
+PalayStat (https://palaystat.philrice.gov.ph) was not downloaded. The Mendeley file already had rice and rainfall.
+GDHY was not downloaded.
+
+3. Earlier block, kept as a record
+
+data.icrisat.org did not connect from this machine on 2026-11-25. The VDSA copy at https://vdsa.icrisat.org/vdsa-requestData.aspx asks for an account. The July 2015 apportioned manual is in docs/all-apportioned-web-document.pdf. Its rainfall file has only annual rain, June, and July plus August. That manual was not the data table.

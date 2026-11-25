@@ -10,6 +10,8 @@ A first setup takes about 10 minutes, and most of that is `pip install`.
 
 A farmer's payment changes only when observed seasonal rainfall is below a number agreed up front. The model estimates how likely that kind of season is. It cannot change what is owed.
 
+RainCheck covers ONE crop in ONE season: wet-season rice (June to October). It does not cover multi-year crops such as coconut or fruit trees, the dry-season rice crop, or losses from typhoons, floods, pests or disease. We chose a single-season crop on purpose: one planting-to-harvest cycle makes a season-total rainfall rule easier to define and to check.
+
 ## Phase 1 layout
 
 ```
@@ -302,7 +304,7 @@ The farmer screen has the three replay seasons (2004, 2017, 2020), week-by-week 
 
 The lender screen shows the loan terms and caps, the relief history, the transaction hash and the evidence hash with copy buttons, and Verify, which says Match or Mismatch. "AI advises, rainfall decides" includes the current season status, the model estimate, the rule score, and those values as decimals. It also shows the 26-season table, the rainfall trend with the payment line and the 10-year mean, and the model comparison. The note that only 3 of 26 seasons fell below the line sits on the table and again directly above the comparison.
 
-The limits panel is open on the first visit and one click away after that. It stays in farmer language in both screens: a public record cannot prove the weather report, weather at the map point is not the farm, local test chain only, the drought mark is a proxy and only 3 of 26 seasons ended below the line, estimates are weak before about week 12, a season total can miss a dry spell, drought only, and this is a prototype and not a regulated product.
+The limits panel is open on the first visit and one click away after that. It stays in farmer language in both screens. In English it starts with the one-crop scope: wet-season rice from June to October, and not coconut, fruit trees, the dry-season rice crop, or losses from typhoons, floods, pests, or disease. The Filipino file still holds that sentence as an unpublished draft. The rest of the list is unchanged: a public record cannot prove the weather report, weather at the map point is not the farm, local test chain only, the drought mark is a proxy and only 3 of 26 seasons ended below the line, estimates are weak before about week 12, a season total can miss a dry spell, drought only, and this is a prototype and not a regulated product.
 
 Screenshots of those screens, at 390 px and 1,280 px, are in `docs/screenshots/`.
 
@@ -378,6 +380,7 @@ The API maps each history row with `relief_from_history_row`. The first event st
 
 ## Limits, stated here on purpose
 
+- RainCheck covers ONE crop in ONE season: wet-season rice (June to October). It does not cover multi-year crops such as coconut or fruit trees, the dry-season rice crop, or losses from typhoons, floods, pests or disease. We chose a single-season crop on purpose: one planting-to-harvest cycle makes a season-total rainfall rule easier to define and to check.
 - The archive value is weather at a grid point from Open-Meteo (CC-BY 4.0; attribute Open-Meteo). It is not a reading from one farm. That difference is basis risk.
 - The local contract can prove what was written down. It cannot prove the weather feed was true. The backend key is the oracle, so this demo does not solve the oracle problem. Open-Meteo is the source (CC-BY 4.0; attribute Open-Meteo).
 - The SPI flag is a rainfall proxy. It is not a measured crop loss, and it is not the official index from a meteorological service.
@@ -394,6 +397,35 @@ Yields rose over those years, so each season is the percent gap from a straight-
 A fixed rule writes the headline, not a model. SUPPORTS means the below-line years sit below the median gap of the other years and the Spearman interval excludes zero. MIXED means exactly one of those two. WEAK means neither. On this file the result is MIXED. The rank correlation of rainfall and the yield gap is negative and its interval excludes zero, so wetter seasons lined up with a weaker gap from the trend. The three below-line seasons (2003, 2004, 2017) sit above the median gap of the other years, so the dry seasons did not have the weaker harvests. The farmer view shows that one MIXED sentence under the limits, in English. A WEAK result would stay on the lender view and in this file, and would not appear for the farmer.
 
 The check lists its limits in plain language: the sample is small, and typhoons, pests, seeds, irrigation, prices, and the July-to-December harvest versus the June-to-October rain can all move the yield. The assistant receives the headline and those limits as facts so it can answer a question about the harvest. It does not use them to grant relief, change a payment, or alter the chance. The payment line, the oracle, and the schedule never read the harvest, and a test checks that those files do not.
+
+## Trigger study on multi-district data
+
+Design locked on 25 Nov 2026 at 15:46 (UTC+8), after the file was opened and before any model was fit. The payment line stays 1,363.0 mm. This study does not change it.
+
+The source is the Mendeley release of unapportioned ICRISAT district data, DOI 10.17632/ywp3y5j9vv.1, CC BY 4.0, one workbook, 12,803 district-years, 560 districts, 20 states, 1990 to 2015. It is not the 1966-boundary apportioned set. Rice yield is in the file, in kilograms per hectare, and so are rice area and rice production. Rainfall is monthly precipitation in millimeters. The workbook's own "Rainy JUN-SEP" column is not the sum of June, July, August, and September (the median gap is about 639 mm), so the study does not use that column. Gross irrigated area is present. It is not rice-specific. Crop-wise rice irrigation is absent, so the irrigation tertiles stay, with the share redefined below. Rows coded -1, and blank cells, stay missing. Nothing is interpolated.
+
+Changes from the earlier plan, locked at the same time:
+
+- A district-year is the unit. The rice figure is the annual district yield. The rain window is June to September, the southwest monsoon, which is the kharif rice season and the window the file labels as rainy. June to October is the window on the Nueva Ecija screen. It is not the window in this India file.
+- Season rain is the sum of the four monthly columns. The two driest key months are the two lowest of those four in that district-year, added together.
+- A district's own normal, for the season sum and for the two-month sum, is the mean of its years up to and including 2007. Years from 2008 onward never enter that mean.
+- The yield trend is a straight line of yield on year, fit on that same district's years up to 2007. A later year is the percent gap from that frozen line. The line is fit only when the district has at least 8 of those early years and the fitted value is positive. The training rows use the same line, so their gaps are in-sample. The test rows do not.
+- A loss year is a gap of -10% or lower. The -5% and -15% labels are a sensitivity check on the rainfall rules only. The logistic regression and the gradient boosting model are fit once, on the -10% label, and are not refit.
+- Irrigation share is gross irrigated area divided by gross cropped area, in the same year, when the irrigated area is present and is not -1 and the cropped area is positive. Shares above 1 are kept. Tertile cuts come from the training districts' median share. A district with no early-year share is left out of the tertile tables.
+- The rainfall rules use only the season total as a percent of the district's own normal. The four cuts are 70, 75, 80, and 85 percent. In each validation scheme the best rule is the one with the highest Brier skill on the low-irrigation tertile. A tie goes to the higher cut. That choice is not revisited.
+- Logistic regression is L2 with C = 1, features standardized on the training rows. Gradient boosting uses 100 trees, depth 2, learning rate 0.05, subsample 0.8, and seed 1363. Features are the season percent, the two-month percent, the irrigation share, and the product of the season percent and the irrigation share. No parameter is changed after the test numbers are seen.
+- Temporal check: train on 1990–2007, test on 2008–2015. Spatial check: each state is held out in turn. The classifier sees other states, and only their years up to 2007. The held-out state's years up to 2007 set that district's normal and its yield line, and those years are neither training rows nor test rows for the classifier. The test rows are the held-out state's years from 2008 on. No district and no state is in both the classifier's training rows and its test rows.
+- Climatology is the training loss rate. Skill is 1 minus the model's Brier score divided by the climatology Brier score. The interval resamples test districts 1,000 times with seed 1363 and does not refit the model. A rule beats climatology only when the low end of that interval is above zero. The study says a rainfall trigger is supported only when the best rule does that in the low-irrigation tertile in both checks. Otherwise the written result is "does not support" or "supports only where rainfed", matching the tertile pattern.
+- The 80% cut is the one compared with the current payment line, which sits near 80% of the long-run mean at the Nueva Ecija grid point. The comparison is verbal. The line is not refit.
+- The written verdict uses the best rule's low-irrigation interval in both checks. If the low end is above zero in both, and the high-irrigation tertile also clears both checks, the words are "support a rainfall trigger". If the low tertile clears both checks and the high tertile does not, the words are "supports only where rainfed". If the low tertile misses either check, the words are "does not support".
+
+Result, computed after that lock. The scored sample is 10,163 district-years with a positive stored rice yield, a June-to-September total, and an irrigation share. 6,769 of them are the 1990–2007 training rows and 2,882 are the 2008–2015 test rows. Assam, Maharashtra, and West Bengal did not reach that test: too few of their districts had eight early years. Twenty-four scored rows have a positive yield and a rice area of zero or below. They were kept because the yield cell was the field in use.
+
+The best cut in both checks was 70 percent of the district's own normal. It was the least bad of the four, not a good rule. In the later years, and in the least-irrigated third (863 district-years, 221 loss years), its Brier skill was -0.487 and the interval was -0.572 to -0.403. It flagged 6.3 percent of those loss years and missed 207. The 80 percent cut, the one nearest the current payment line, was worse (skill -0.620, interval -0.745 to -0.509). The same pattern appears when each state is held out. The -5 percent and -15 percent labels do not repair it. Logistic regression showed a small gain on the full later-year sample (skill 0.018, interval 0.001 to 0.035) and no gain whose interval stayed above zero in the least-irrigated third or in the state hold-out. Gradient boosting did not beat the historical loss rate. The locked verdict uses the rainfall rule.
+
+CAN QUOTE: On 560 Indian districts from 1990 to 2015, a rule that paid when June-September rain fell below 70, 75, 80, or 85 percent of that district's own normal did not beat the historical rate of bad rice years, including in the least-irrigated third. This does not support a rainfall trigger.
+
+CANNOT QUOTE a claim that the rainfall rule predicts rice yield loss, or that it works for the least-irrigated districts. The full tables are in `docs/panel_study.txt`. The source note is in `docs/panel_data_sources.txt`.
 
 ## AI in RainCheck
 

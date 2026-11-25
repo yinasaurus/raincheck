@@ -1,0 +1,120 @@
+Trigger study on the Mendeley ICRISAT district file
+Design locked 2026-11-25 15:46 UTC+8, before these numbers were computed.
+DOI 10.17632/ywp3y5j9vv.1. CC BY 4.0. Unapportioned districts, 1990-2015.
+Clean rows with rice, June-September rain, and an irrigation share: 10163.
+Temporal train rows 6769, test rows 2882.
+Spatial test rows 2882.
+
+Verdict: does not support.
+
+CAN QUOTE: On 560 Indian districts from 1990 to 2015, a rule that paid when June-September rain fell below 70, 75, 80, or 85 percent of that district's own normal did not beat the historical rate of bad rice years, including in the least-irrigated third. This does not support a rainfall trigger.
+CANNOT QUOTE: a claim that the rainfall rule predicts rice yield loss, or that it works for the least-irrigated districts.
+Best rainfall cut, temporal low-irrigation tertile: 70 percent of the district normal.
+Best rainfall cut, spatial low-irrigation tertile: 70 percent of the district normal.
+The current Nueva Ecija payment line is about 80 percent of that site's long-run mean. It was not refit.
+
+TEMPORAL
+Rule 70 percent
+  all: n 2882 losses 575 brier 0.254 skill -0.580 interval -0.652 to -0.515 auc 0.493 hit 0.073 false-alarm 0.087 basis-risk 533
+  low: n 863 losses 221 brier 0.284 skill -0.487 interval -0.572 to -0.403 auc 0.502 hit 0.063 false-alarm 0.059 basis-risk 207
+  mid: n 979 losses 184 brier 0.226 skill -0.458 interval -0.568 to -0.344 auc 0.506 hit 0.076 false-alarm 0.064 basis-risk 170
+  high: n 1040 losses 170 brier 0.257 skill -0.810 interval -0.973 to -0.677 auc 0.477 hit 0.082 false-alarm 0.128 basis-risk 156
+Rule 75 percent
+  all: n 2882 losses 575 brier 0.276 skill -0.714 interval -0.798 to -0.643 auc 0.491 hit 0.104 false-alarm 0.121 basis-risk 515
+  low: n 863 losses 221 brier 0.304 skill -0.590 interval -0.692 to -0.492 auc 0.498 hit 0.090 false-alarm 0.095 basis-risk 201
+  mid: n 979 losses 184 brier 0.239 skill -0.544 interval -0.679 to -0.421 auc 0.514 hit 0.120 false-alarm 0.091 basis-risk 162
+  high: n 1040 losses 170 brier 0.287 skill -1.027 interval -1.195 to -0.880 auc 0.468 hit 0.106 false-alarm 0.169 basis-risk 152
+Rule 80 percent
+  all: n 2882 losses 575 brier 0.290 skill -0.800 interval -0.891 to -0.715 auc 0.506 hit 0.165 false-alarm 0.154 basis-risk 480
+  low: n 863 losses 221 brier 0.309 skill -0.620 interval -0.745 to -0.509 auc 0.513 hit 0.149 false-alarm 0.123 basis-risk 188
+  mid: n 979 losses 184 brier 0.260 skill -0.682 interval -0.842 to -0.548 auc 0.520 hit 0.168 false-alarm 0.128 basis-risk 153
+  high: n 1040 losses 170 brier 0.301 skill -1.122 interval -1.329 to -0.936 auc 0.491 hit 0.182 false-alarm 0.200 basis-risk 139
+Rule 85 percent
+  all: n 2882 losses 575 brier 0.299 skill -0.856 interval -0.965 to -0.753 auc 0.529 hit 0.242 false-alarm 0.184 basis-risk 436
+  low: n 863 losses 221 brier 0.312 skill -0.632 interval -0.788 to -0.498 auc 0.535 hit 0.222 false-alarm 0.151 basis-risk 172
+  mid: n 979 losses 184 brier 0.280 skill -0.808 interval -1.004 to -0.637 auc 0.529 hit 0.223 false-alarm 0.165 basis-risk 143
+  high: n 1040 losses 170 brier 0.306 skill -1.156 interval -1.387 to -0.951 auc 0.531 hit 0.288 false-alarm 0.226 basis-risk 121
+logistic
+  all: n 2882 losses 575 brier 0.158 skill 0.018 interval 0.001 to 0.035 auc 0.608
+  low: n 863 losses 221 brier 0.189 skill 0.010 interval -0.022 to 0.041 auc 0.628
+  mid: n 979 losses 184 brier 0.152 skill 0.015 interval -0.013 to 0.045 auc 0.590
+  high: n 1040 losses 170 brier 0.138 skill 0.030 interval 0.003 to 0.062 auc 0.556
+boosting
+  all: n 2882 losses 575 brier 0.163 skill -0.010 interval -0.031 to 0.009 auc 0.606
+  low: n 863 losses 221 brier 0.192 skill -0.005 interval -0.038 to 0.026 auc 0.633
+  mid: n 979 losses 184 brier 0.159 skill -0.029 interval -0.063 to 0.008 auc 0.584
+  high: n 1040 losses 170 brier 0.141 skill 0.002 interval -0.029 to 0.038 auc 0.549
+Calibration of the best rule, all test rows
+  n 576 predicted 0.000 observed 0.189
+  n 576 predicted 0.000 observed 0.120
+  n 576 predicted 0.000 observed 0.156
+  n 576 predicted 0.000 observed 0.335
+  n 578 predicted 0.419 observed 0.197
+Sensitivity of that same cut, all test rows, labels -5% and -15%
+  loss_5: n 2882 losses 781 brier 0.313 skill -0.572 interval -0.631 to -0.521 auc 0.496 hit 0.078 false-alarm 0.086 basis-risk 720
+  loss_15: n 2882 losses 432 brier 0.214 skill -0.588 interval -0.672 to -0.509 auc 0.490 hit 0.067 false-alarm 0.087 basis-risk 403
+Worst missed loss years in the low-irrigation tertile
+  2009 Jharkhand Chatra gap -84.6 percent season 85.9 percent of normal
+  2015 Jharkhand Godda gap -83.1 percent season 118.7 percent of normal
+  2009 Gujarat Dahod gap -81.7 percent season 72.8 percent of normal
+  2010 Jharkhand Chatra gap -77.2 percent season 75.9 percent of normal
+  2014 Gujarat Dahod gap -74.4 percent season 116.4 percent of normal
+  2009 Orissa Jharsuguda gap -73.2 percent season 94.6 percent of normal
+  2015 Jharkhand Santhal Paragana / Dumka gap -72.0 percent season 117.6 percent of normal
+  2010 Jharkhand Singhbhum East gap -68.6 percent season 88.2 percent of normal
+  2009 Jharkhand Giridih gap -67.7 percent season 84.4 percent of normal
+  2009 Jharkhand Devghar / Deogarh gap -67.2 percent season 86.0 percent of normal
+
+SPATIAL
+Rule 70 percent
+  all: n 2882 losses 575 brier 0.254 skill -0.575 interval -0.644 to -0.512 auc 0.493 hit 0.073 false-alarm 0.087 basis-risk 533
+  low: n 886 losses 230 brier 0.282 skill -0.461 interval -0.539 to -0.381 auc 0.507 hit 0.070 false-alarm 0.055 basis-risk 214
+  mid: n 948 losses 177 brier 0.225 skill -0.459 interval -0.575 to -0.349 auc 0.503 hit 0.068 false-alarm 0.062 basis-risk 165
+  high: n 1048 losses 168 brier 0.258 skill -0.823 interval -0.972 to -0.686 auc 0.476 hit 0.083 false-alarm 0.132 basis-risk 154
+Rule 75 percent
+  all: n 2882 losses 575 brier 0.276 skill -0.709 interval -0.784 to -0.637 auc 0.491 hit 0.104 false-alarm 0.121 basis-risk 515
+  low: n 886 losses 230 brier 0.299 skill -0.548 interval -0.646 to -0.469 auc 0.506 hit 0.100 false-alarm 0.088 basis-risk 207
+  mid: n 948 losses 177 brier 0.239 skill -0.555 interval -0.686 to -0.425 auc 0.511 hit 0.113 false-alarm 0.091 basis-risk 157
+  high: n 1048 losses 168 brier 0.289 skill -1.046 interval -1.217 to -0.898 auc 0.464 hit 0.101 false-alarm 0.173 basis-risk 151
+Rule 80 percent
+  all: n 2882 losses 575 brier 0.290 skill -0.795 interval -0.880 to -0.714 auc 0.506 hit 0.165 false-alarm 0.154 basis-risk 480
+  low: n 886 losses 230 brier 0.306 skill -0.583 interval -0.704 to -0.489 auc 0.520 hit 0.157 false-alarm 0.117 basis-risk 194
+  mid: n 948 losses 177 brier 0.259 skill -0.685 interval -0.845 to -0.547 auc 0.518 hit 0.164 false-alarm 0.127 basis-risk 148
+  high: n 1048 losses 168 brier 0.303 skill -1.147 interval -1.345 to -0.985 auc 0.487 hit 0.179 false-alarm 0.205 basis-risk 138
+Rule 85 percent
+  all: n 2882 losses 575 brier 0.299 skill -0.850 interval -0.957 to -0.757 auc 0.529 hit 0.242 false-alarm 0.184 basis-risk 436
+  low: n 886 losses 230 brier 0.307 skill -0.589 interval -0.737 to -0.461 auc 0.543 hit 0.230 false-alarm 0.145 basis-risk 177
+  mid: n 948 losses 177 brier 0.281 skill -0.822 interval -1.025 to -0.650 auc 0.523 hit 0.209 false-alarm 0.163 basis-risk 140
+  high: n 1048 losses 168 brier 0.308 skill -1.181 interval -1.396 to -0.996 auc 0.530 hit 0.292 false-alarm 0.232 basis-risk 119
+logistic
+  all: n 2882 losses 575 brier 0.159 skill 0.012 interval -0.006 to 0.030 auc 0.600
+  low: n 886 losses 230 brier 0.190 skill 0.016 interval -0.019 to 0.046 auc 0.631
+  mid: n 948 losses 177 brier 0.154 skill 0.003 interval -0.024 to 0.032 auc 0.580
+  high: n 1048 losses 168 brier 0.139 skill 0.017 interval -0.008 to 0.048 auc 0.536
+boosting
+  all: n 2882 losses 575 brier 0.165 skill -0.025 interval -0.047 to -0.006 auc 0.591
+  low: n 886 losses 230 brier 0.193 skill -0.001 interval -0.035 to 0.029 auc 0.622
+  mid: n 948 losses 177 brier 0.159 skill -0.034 interval -0.070 to -0.001 auc 0.587
+  high: n 1048 losses 168 brier 0.148 skill -0.044 interval -0.082 to -0.005 auc 0.510
+Calibration of the best rule, all test rows
+  n 576 predicted 0.000 observed 0.250
+  n 576 predicted 0.000 observed 0.318
+  n 576 predicted 0.000 observed 0.184
+  n 576 predicted 0.000 observed 0.144
+  n 578 predicted 0.419 observed 0.102
+Sensitivity of that same cut, all test rows, labels -5% and -15%
+  loss_5: n 2882 losses 781 brier 0.313 skill -0.571 interval -0.625 to -0.518 auc 0.496 hit 0.078 false-alarm 0.086 basis-risk 720
+  loss_15: n 2882 losses 432 brier 0.214 skill -0.579 interval -0.663 to -0.504 auc 0.490 hit 0.067 false-alarm 0.087 basis-risk 403
+Worst missed loss years in the low-irrigation tertile
+  2009 Jharkhand Chatra gap -84.6 percent season 85.9 percent of normal
+  2015 Jharkhand Godda gap -83.1 percent season 118.7 percent of normal
+  2009 Gujarat Dahod gap -81.7 percent season 72.8 percent of normal
+  2010 Jharkhand Chatra gap -77.2 percent season 75.9 percent of normal
+  2014 Gujarat Dahod gap -74.4 percent season 116.4 percent of normal
+  2009 Orissa Jharsuguda gap -73.2 percent season 94.6 percent of normal
+  2015 Jharkhand Santhal Paragana / Dumka gap -72.0 percent season 117.6 percent of normal
+  2009 Jharkhand Gadva / Garhwa gap -71.2 percent season 86.8 percent of normal
+  2009 Jharkhand Palamau gap -70.6 percent season 82.7 percent of normal
+  2010 Jharkhand Singhbhum East gap -68.6 percent season 88.2 percent of normal
+
+Limits: India, not Nueva Ecija. District averages, not one farm. Unapportioned boundaries change over these years. The yield is the annual rice crop, not a June-September harvest. Gross irrigated area is not rice irrigation. Pests, floods, prices, policy, and older records can move yield. The bootstrap does not refit the model.

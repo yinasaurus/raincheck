@@ -1,0 +1,5 @@
+The stop recorded on the morning of 25 Nov 2026 is superseded.
+At 15:46 UTC+8 the same day, the Mendeley file DOI 10.17632/ywp3y5j9vv.1 opened the gate.
+It has rice yield, monthly rainfall, a year, and a district id. The study uses that file.
+See docs/panel_data_sources.txt and the README section "Trigger study on multi-district data".
+data.icrisat.org itself still did not connect. That website is not the source that was used.

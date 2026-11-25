@@ -35,6 +35,11 @@ test("Filipino changes the farmer copy", async ({ page }) => {
 
 test("the limits panel hides and opens again", async ({ page }) => {
   await openFarmer(page);
+  await expect(page.getByText("wet-season rice (June to October)")).toBeVisible();
+  await expect(page.getByText("does not cover multi-year crops such as coconut")).toBeVisible();
+  await page.getByRole("button", { name: "Filipino" }).click();
+  await expect(page.getByText("wet-season rice (June to October)")).toHaveCount(0);
+  await page.getByRole("button", { name: "English" }).click();
   await expect(page.getByText("This is a prototype and a simulation.")).toBeVisible();
   await page.getByRole("button", { name: "Hide how it works" }).click();
   const opener = page.getByRole("button", { name: "How this works and its limits" });
@@ -59,6 +64,7 @@ test("the 26-season table shows the harvest beside each season", async ({ page }
   await openFarmer(page);
   await expect(page.getByTestId("harvest-farmer")).toContainText("only partly lined up");
   await page.getByRole("button", { name: "Lender and auditor" }).click();
+  await expect(page.getByText("wet-season rice (June to October)")).toBeVisible();
   await expect(page.getByTestId("harvest-2004")).toHaveText("+12%");
   await expect(page.getByTestId("harvest-2017")).toHaveText("+2%");
   await expect(page.getByTestId("harvest-2026")).toHaveText("not available");
@@ -91,12 +97,27 @@ test("the farmer flow works from the keyboard", async ({ page }) => {
 
 test("axe finds no serious issues at 390 and 1280", async ({ page }) => {
   await openFarmer(page);
+  await expect(page.getByText("wet-season rice (June to October)")).toBeVisible();
+  const found = [];
+  for (const width of [390, 1280]) {
+    await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+    const results = await new AxeBuilder({ page }).include("aside").analyze();
+    for (const violation of results.violations) {
+      found.push({
+        width,
+        view: "limits",
+        id: violation.id,
+        impact: violation.impact,
+        help: violation.help,
+        nodes: violation.nodes.slice(0, 3).map((node) => node.target.join(" ")),
+      });
+    }
+  }
   await runYear(page, "2004");
   await page.getByRole("slider", { name: "Week" }).fill("21");
   await expect(page.getByTestId("season-banner")).toContainText("30% lower");
   await page.getByRole("button", { name: "What does this chance mean?" }).click();
   await expect(page.getByTestId("ask-answer")).toBeVisible({ timeout: 20000 });
-  const found = [];
   for (const width of [390, 1280]) {
     await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
     const results = await new AxeBuilder({ page }).analyze();

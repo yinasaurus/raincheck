@@ -141,6 +141,10 @@ export const fil = {
   auditLabel: "AI-generated. It does not change the record.",
 } as const satisfies Record<keyof typeof en, string>;
 
+/** Draft only. Not shown until a native speaker reviews it. */
+export const filScopeDraft =
+  "Saklaw ng RainCheck ang ISANG pananim sa ISANG season: palay sa tag-ulan (Hunyo hanggang Oktubre). Hindi nito saklaw ang mga pananim na maraming taon tulad ng niyog o prutas, ang palay sa tag-araw, o ang pinsala mula sa bagyo, baha, peste, o sakit. Pinili namin ang isang season nang sadya: mas madaling tukuyin at suriin ang tuntunin sa kabuuang ulan kung iisa ang siklo mula sa tanim hanggang sa ani.";
+
 export const filLimits = [
   "Ang pampublikong tala ay nagpapatunay ng isinulat. Hindi nito napapatunayan na totoo ang ulat ng panahon.",
   "Ang panahon sa puntong ito ng mapa ay hindi katulad ng panahon sa isang bukid.",

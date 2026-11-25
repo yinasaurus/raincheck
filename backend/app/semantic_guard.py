@@ -266,6 +266,25 @@ def forbidden_claim(answer: str) -> str | None:
     return None
 
 
+_COVERAGE = re.compile(
+    r"yes[, ]+it covers|it does cover|covers your coconut|covers coconut|coconut is covered|"
+    r"coconut farm is covered|covers typhoon|typhoon is covered|typhoon damage is covered|"
+    r"pays for typhoon|covers the dry season|covers the dry-season|dry season crop is covered|"
+    r"dry-season crop is covered|includes the dry season|also covers",
+    re.IGNORECASE,
+)
+
+
+def implies_coverage(answer: str) -> bool:
+    """True when the text says coconut, typhoon losses, or the dry-season crop are covered."""
+    return _COVERAGE.search(answer or "") is not None
+
+
+def states_the_scope(answer: str) -> bool:
+    text = (answer or "").lower()
+    return "wet-season rice" in text and "does not cover" in text and "june to october" in text
+
+
 def semantic_failure(answer: str, facts: list[dict], intent: str) -> str | None:
     """Why an assistant answer is discarded. None means the semantic rules accept it."""
     reason = forbidden_claim(answer)
@@ -279,4 +298,8 @@ def semantic_failure(answer: str, facts: list[dict], intent: str) -> str | None:
         return "semantic:payment-missing"
     if intent == "chance" and not states_that_the_chance_is_advisory(answer, facts):
         return "semantic:chance-missing"
+    if intent == "scope" and implies_coverage(answer):
+        return "semantic:coverage"
+    if intent == "scope" and not states_the_scope(answer):
+        return "semantic:scope-missing"
     return None

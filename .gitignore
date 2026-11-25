@@ -15,3 +15,4 @@ coverage/
 backend/chain/deployment.json
 backend/data/evidence/*.json
 docs/TEAM_GUIDE.txt
+backend/data/panel/raw/

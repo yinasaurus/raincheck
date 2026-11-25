@@ -138,6 +138,7 @@ export const en = {
 } as const;
 
 export const enLimits = [
+  "RainCheck covers ONE crop in ONE season: wet-season rice (June to October). It does not cover multi-year crops such as coconut or fruit trees, the dry-season rice crop, or losses from typhoons, floods, pests or disease. We chose a single-season crop on purpose: one planting-to-harvest cycle makes a season-total rainfall rule easier to define and to check.",
   "A public record can prove what was written down. It cannot prove the weather report was true.",
   "Weather at this map point is not the same as weather on one farm.",
   "This runs on a local test chain only.",

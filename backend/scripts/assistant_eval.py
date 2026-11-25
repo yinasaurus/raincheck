@@ -45,7 +45,7 @@ REVIEW = (
     "s10",
     "s15",
 )
-CATEGORIES = ("normal", "relief", "adversarial", "whatif", "semantic", "model")
+CATEGORIES = ("normal", "relief", "adversarial", "whatif", "semantic", "model", "scope")
 # The 24 Nov 2026 live run on the original 40 cases, before the semantic guard.
 BEFORE = {
     "normal": (12, 12),
@@ -54,6 +54,7 @@ BEFORE = {
     "whatif": (10, 9),
     "semantic": None,
     "model": None,
+    "scope": None,
     "all": (40, 39),
     "number_discards": 0,
     "semantic_discards": "not checked",

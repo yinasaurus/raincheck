@@ -26,6 +26,12 @@ logger = logging.getLogger("raincheck.assistant")
 BUSY = "The AI service is busy. Please try again tomorrow."
 BUSY_NOTE = "Basic answer: the AI service is busy."
 ANSWER_CAP = 700
+SCOPE = (
+    "RainCheck covers ONE crop in ONE season: wet-season rice (June to October). "
+    "It does not cover multi-year crops such as coconut or fruit trees, the dry-season rice crop, "
+    "or losses from typhoons, floods, pests or disease. "
+    "We chose a single-season crop on purpose: one planting-to-harvest cycle makes a season-total rainfall rule easier to define and to check."
+)
 DEMO_SEASONS = {2004, 2017, 2020}
 SUGGESTED = {
     "what does this chance mean?",
@@ -71,6 +77,9 @@ SYSTEM = (
     "The 2017 miss and the 2020 false alarm are in the facts. "
     "When asked what the model got wrong in 2017 or 2020, answer from those facts. "
     "Do not call that question out of scope. "
+    "The Scope fact says what this page covers. "
+    "When asked about another crop, the dry-season rice crop, a typhoon, a flood, pests, or disease, answer from that fact. "
+    "Say it does not cover them. Do not imply those are covered. Do not call that question out of scope. "
     "Do not invent numbers. Do not mention blockchain, contracts, wallets, gas, or hashes "
     "when the audience is the farmer."
 )
@@ -279,6 +288,22 @@ def intent_of(question: str, facts: list[dict]) -> str:
     )
     if any(piece in text for piece in attacks) or _foreign_number(question, facts):
         return "refuse"
+    if any(
+        piece in text
+        for piece in (
+            "coconut",
+            "fruit tree",
+            "typhoon",
+            "flood",
+            "pest",
+            "disease",
+            "dry season crop",
+            "dry-season",
+            "multi-year",
+            "multi year",
+        )
+    ):
+        return "scope"
     if "limit" in text:
         return "limits"
     if "verif" in text or "record" in text:
@@ -377,6 +402,8 @@ def template_answer(intent: str, facts: list[dict], audience: str) -> str:
             f"at week {_get(facts, '2020 first week at or above half')}. "
             f"The season finished at {_get(facts, '2020 season total')}, above the line, so no relief."
         )
+    if intent == "scope":
+        return f"{_get(facts, 'Scope')} It does not cover that."
     if intent == "limits":
         return (
             f"{_get(facts, 'Limit: estimate')} "
@@ -539,6 +566,7 @@ def build_facts(service, season: int, week: int, audience: str, evidence_prefix:
     _add(facts, "Limit: estimate", "Estimates are rough before week 12.")
     _add(facts, "Limit: farm", "Weather at this map point is not the same as weather on one farm.")
     _add(facts, "Limit: prototype", "This is a prototype and a simulation. It is not a regulated lending product.")
+    _add(facts, "Scope", SCOPE)
     if audience == "lender":
         prefix = evidence_prefix if evidence_prefix and re.fullmatch(r"0x[0-9a-fA-F]{4,16}", evidence_prefix) else "not available"
         _add(facts, "Evidence prefix", prefix)
