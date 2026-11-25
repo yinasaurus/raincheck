@@ -5,12 +5,15 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.assistant import (
+    UNAVAILABLE_NOTE,
     numbers_ok,
     reset_assistant_state,
     set_provider_override,
+    stats,
     template_answer,
     words_ok,
 )
+from app.llm_client import GeminiProvider, LlmError, error_kind
 from app.semantic_guard import (
     blames_relief_on_something_other_than_final_rainfall,
     claims_fewer_payments,
@@ -124,6 +127,122 @@ def test_daily_cap_returns_429_with_a_plain_message(monkeypatch):
     assert second.status_code == 429
     assert second.json()["detail"] == "The AI service is busy. Please try again tomorrow."
     assert SECRET not in second.text
+
+
+def test_http_status_becomes_a_short_kind_and_drops_the_body():
+    secret = "prepayment credits are depleted"
+    body = '{"error":{"code":402,"status":"RESOURCE_EXHAUSTED","message":"' + secret + '"}}'
+    assert error_kind(402, body) == "quota"
+    assert error_kind(429, "") == "quota"
+    assert error_kind(503, "RESOURCE_EXHAUSTED") == "quota"
+    assert error_kind(500, "") == "server"
+    assert error_kind(400, "") == "http"
+    failure = LlmError(error_kind(402, body))
+    assert str(failure) == "quota"
+    assert secret not in str(failure)
+    assert "RESOURCE_EXHAUSTED" not in str(failure)
+
+
+def test_gemini_402_429_500_and_timeout_hide_the_provider_text(monkeypatch):
+    import io
+    import urllib.error
+    import urllib.request
+
+    holder = {"code": 402}
+
+    def boom(request, timeout=6):
+        code = holder["code"]
+        if code == 1:
+            raise TimeoutError("slow")
+        if code == 500:
+            raw = b'{"error":{"message":"internal failure"}}'
+        else:
+            raw = b'{"error":{"status":"RESOURCE_EXHAUSTED","message":"prepayment credits are depleted"}}'
+        raise urllib.error.HTTPError(request.full_url, code, "err", hdrs=None, fp=io.BytesIO(raw))
+
+    monkeypatch.setattr(urllib.request, "urlopen", boom)
+    provider = GeminiProvider("local-test-token", "gemini-3.5-flash-lite")
+    for code, kind in ((402, "quota"), (429, "quota"), (500, "server")):
+        holder["code"] = code
+        with pytest.raises(LlmError) as caught:
+            provider.generate("system", "user", None)
+        assert caught.value.kind == kind
+        assert "prepayment" not in str(caught.value)
+        assert "internal failure" not in str(caught.value)
+        assert "local-test-token" not in str(caught.value)
+    holder["code"] = 1
+    with pytest.raises(LlmError) as caught:
+        provider.generate("system", "user", None)
+    assert caught.value.kind == "timeout"
+
+
+class _Failing:
+    def __init__(self, kind: str) -> None:
+        self.kind = kind
+        self.calls = 0
+
+    def generate(self, system: str, user: str, schema: dict | None) -> str:
+        self.calls += 1
+        raise LlmError(self.kind)
+
+
+def _ask(client: TestClient, question: str) -> dict:
+    response = client.post(
+        "/api/assistant",
+        json={"question": question, "season": 2004, "week": 21},
+    )
+    assert response.status_code == 200
+    return response.json()
+
+
+def test_quota_falls_back_once_and_blocks_later_calls():
+    failing = _Failing("quota")
+    set_provider_override(failing)
+    client = TestClient(app)
+    first = _ask(client, "Tell me the chance in plain words.")
+    assert first["source"] == "template"
+    assert first["note"] == UNAVAILABLE_NOTE
+    assert "402" not in first["answer"]
+    assert "quota" not in json.dumps(first).lower()
+    health = client.get("/api/health").json()
+    assert health["llm_status"] == "fallback"
+    assert "quota" not in json.dumps(health).lower()
+    second = _ask(client, "Tell me the chance again in other words.")
+    assert second["note"] == UNAVAILABLE_NOTE
+    assert failing.calls == 1
+
+
+def test_a_server_error_retries_once_and_a_timeout_retries_once():
+    server = _Failing("server")
+    set_provider_override(server)
+    client = TestClient(app)
+    body = _ask(client, "Tell me the chance in plain words.")
+    assert body["source"] == "template"
+    assert body["note"] == "Basic answer: the AI service is busy."
+    assert server.calls == 2
+    timeout = _Failing("timeout")
+    set_provider_override(timeout)
+    from app.assistant import reset_assistant_state as _reset
+
+    _reset()
+    set_provider_override(timeout)
+    again = _ask(client, "Tell me the chance in plain words once more.")
+    assert again["source"] == "template"
+    assert timeout.calls == 2
+
+
+def test_sixty_quota_requests_do_not_make_one_hundred_twenty_calls(monkeypatch):
+    monkeypatch.setenv("LLM_DAILY_CAP_PER_IP", "1000")
+    monkeypatch.setenv("LLM_DAILY_CAP", "1000")
+    failing = _Failing("quota")
+    set_provider_override(failing)
+    client = TestClient(app)
+    for index in range(60):
+        body = _ask(client, f"Tell me the chance in plain words number {index}.")
+        assert body["note"] == UNAVAILABLE_NOTE
+    assert failing.calls == 1
+    assert stats["llm_calls"] == 1
+    assert stats["llm_calls"] < 120
 
 
 def test_timeout_falls_back_after_one_retry():

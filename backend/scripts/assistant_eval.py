@@ -198,7 +198,21 @@ def _redact(text: str) -> str:
     return text
 
 
-def _one_run(client, cases: list[dict], run_index: int, live: bool, model: str, provider) -> tuple[dict, list[dict]]:
+def plans_model_call(case: dict) -> bool:
+    """One planned call. A blank or ambiguous what-if never reaches the model. A retry is not planned."""
+    if case["endpoint"] == "assistant":
+        return True
+    from app.assistant import _ambiguous
+
+    text = " ".join((case.get("text") or "").split())
+    return bool(text) and not _ambiguous(text)
+
+
+def planned_calls(cases: list[dict], runs: int) -> int:
+    return sum(1 for case in cases if plans_model_call(case)) * runs
+
+
+def _one_run(client, cases: list[dict], run_index: int, live: bool, model: str, provider, max_calls: int | None) -> tuple[dict, list[dict]]:
     from app.assistant import discard_log, reset_assistant_state, semantic_rules, set_provider_override, stats
 
     reset_assistant_state()
@@ -213,7 +227,11 @@ def _one_run(client, cases: list[dict], run_index: int, live: bool, model: str, 
     print(f"run: {run_index}")
     print(f"cases: {len(cases)}")
     for case in cases:
+        if max_calls is not None and stats["llm_calls"] >= max_calls:
+            print(f"Stopped: LLM calls reached --max-calls {max_calls}.")
+            break
         started = time.perf_counter()
+        calls_before = stats["llm_calls"]
         if case["endpoint"] == "whatif":
             response = client.post("/api/whatif/parse", json={"text": case["text"]})
         else:
@@ -245,6 +263,8 @@ def _one_run(client, cases: list[dict], run_index: int, live: bool, model: str, 
             print(f"DISCARD {case['id']} reason={item['reason']} missing={item['missing_numbers']}")
             print(f"  question: {question}")
             print(f"  raw: {item['raw'][:800]}")
+        calls = stats["llm_calls"] - calls_before
+        print(f"calls {case['id']}: {calls}")
         rows.append(
             {
                 "id": case["id"],
@@ -254,6 +274,7 @@ def _one_run(client, cases: list[dict], run_index: int, live: bool, model: str, 
                 "raw": raw,
                 "returned": returned,
                 "passed": passed,
+                "calls": calls,
                 "discards": [{"reason": item["reason"], "raw": item["raw"]} for item in fresh],
                 "facts": body.get("facts_used") or [],
             }
@@ -384,6 +405,10 @@ def _git_hash() -> str:
     return digest
 
 
+def _fallback_rate(summary: dict) -> float:
+    return summary["fallbacks"] / max(summary["assistant_cases"], 1)
+
+
 def _write_results(summaries: list[dict], transcripts: list[list[dict]]) -> None:
     lines = [
         f"model: {summaries[-1]['model']}",
@@ -456,8 +481,19 @@ def _write_results(summaries: list[dict], transcripts: list[list[dict]]) -> None
                 lines.append(f"  raw: {item['raw']}")
     if not seen_discard:
         lines.append("none")
+    lines.append("")
+    lines.append("Calls per case:")
+    for summary, rows in zip(summaries, transcripts):
+        for row in rows:
+            lines.append(f"run {summary['run']} {row['id']}: {row.get('calls', 0)}")
     text = _redact("\n".join(lines) + "\n")
     DOCS.mkdir(parents=True, exist_ok=True)
+    if any(_fallback_rate(item) > 0.5 for item in summaries):
+        invalid = "invalid, provider unavailable\n" + text
+        (DOCS / "ai_eval_results_invalid.txt").write_text(invalid, encoding="utf-8")
+        print("invalid, provider unavailable")
+        print("Refusing to write this run as an LLM evaluation.")
+        return
     (DOCS / "ai_eval_results.txt").write_text(text, encoding="utf-8")
 
 
@@ -487,7 +523,16 @@ def _write_answers(transcripts: list[list[dict]]) -> None:
     (DOCS / "ai_eval_answers.txt").write_text(text, encoding="utf-8")
 
 
-def run(live: bool, runs: int = 1) -> int:
+def _print_plan(cases: list[dict], runs: int) -> int:
+    planned = planned_calls(cases, runs)
+    print(f"planned LLM calls: {planned}")
+    print("One call is planned for each assistant question and each single-number what-if.")
+    print("A blank or ambiguous what-if plans 0. A timeout or a server error may add one retry.")
+    print("A quota or billing error does not retry.")
+    return planned
+
+
+def run(live: bool, runs: int = 1, dry_run: bool = False, max_calls: int | None = None, yes: bool = False) -> int:
     from dotenv import load_dotenv
     from fastapi.testclient import TestClient
 
@@ -495,6 +540,18 @@ def run(live: bool, runs: int = 1) -> int:
     from app.llm_client import model_name
     from app.main import app
 
+    cases = [json.loads(line) for line in CASES.read_text(encoding="utf-8").splitlines() if line.strip()]
+    planned = _print_plan(cases, runs)
+    if dry_run:
+        for case in cases:
+            print(f"  {case['id']}: {1 if plans_model_call(case) else 0}")
+        return 0
+    if live and not yes:
+        print("Refusing a live run without --yes.")
+        return 2
+    if max_calls is not None and planned > max_calls:
+        print(f"Refusing the run: planned {planned} calls is above --max-calls {max_calls}.")
+        return 2
     if live:
         load_dotenv(BACKEND.parent / ".env")
     reset_assistant_state()
@@ -510,7 +567,6 @@ def run(live: bool, runs: int = 1) -> int:
         print("GEMINI_API_KEY is not set. Refusing a live run.")
         return 2
 
-    cases = [json.loads(line) for line in CASES.read_text(encoding="utf-8").splitlines() if line.strip()]
     client = TestClient(app)
     model = model_name() if live else "mock"
     summaries = []
@@ -518,7 +574,7 @@ def run(live: bool, runs: int = 1) -> int:
     provider = None if live else MockProvider()
     try:
         for index in range(1, runs + 1):
-            summary, rows = _one_run(client, cases, index, live, model, provider)
+            summary, rows = _one_run(client, cases, index, live, model, provider, max_calls)
             summaries.append(summary)
             transcripts.append(rows)
     finally:
@@ -536,10 +592,21 @@ def run(live: bool, runs: int = 1) -> int:
         else:
             os.environ["GEMINI_API_KEY"] = previous_key
     if live:
+        invalid = any(_fallback_rate(item) > 0.5 for item in summaries)
         _write_results(summaries, transcripts)
-        _write_answers(transcripts)
+        if not invalid:
+            _write_answers(transcripts)
     all_ok = all(item["all"][0] == item["all"][1] for item in summaries)
     return 0 if all_ok else 1
+
+
+def _option(name: str) -> str | None:
+    if name not in sys.argv:
+        return None
+    index = sys.argv.index(name)
+    if index + 1 >= len(sys.argv):
+        return None
+    return sys.argv[index + 1]
 
 
 if __name__ == "__main__":
@@ -547,4 +614,13 @@ if __name__ == "__main__":
     count = 1
     if "--runs" in sys.argv:
         count = int(sys.argv[sys.argv.index("--runs") + 1])
-    sys.exit(run(live, count))
+    raw_max = _option("--max-calls")
+    sys.exit(
+        run(
+            live,
+            count,
+            dry_run="--dry-run" in sys.argv,
+            max_calls=None if raw_max is None else int(raw_max),
+            yes="--yes" in sys.argv,
+        )
+    )

@@ -29,6 +29,22 @@ class LlmError(Exception):
         super().__init__(kind)
 
 
+def error_kind(code: int, body: str) -> str:
+    """Classify an HTTP failure. The body is not kept. Quota and billing do not retry."""
+    if code in {402, 429} or "RESOURCE_EXHAUSTED" in (body or ""):
+        return "quota"
+    if 500 <= code <= 599:
+        return "server"
+    return "http"
+
+
+def _read_error(exc: urllib.error.HTTPError) -> str:
+    try:
+        return exc.read().decode("utf-8", errors="replace")
+    except Exception:
+        return ""
+
+
 class Provider(Protocol):
     def generate(self, system: str, user: str, schema: dict | None) -> str: ...
 
@@ -81,8 +97,7 @@ class GeminiProvider:
             with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
                 raw = response.read().decode("utf-8", errors="replace")
         except urllib.error.HTTPError as exc:
-            exc.read()
-            raise LlmError("http") from None
+            raise LlmError(error_kind(exc.code, _read_error(exc))) from None
         except TimeoutError as exc:
             raise LlmError("timeout") from exc
         except urllib.error.URLError as exc:
@@ -120,8 +135,8 @@ class OpenAICompatibleProvider:
         try:
             with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
                 raw = response.read().decode("utf-8", errors="replace")
-        except urllib.error.HTTPError:
-            raise LlmError("http") from None
+        except urllib.error.HTTPError as exc:
+            raise LlmError(error_kind(exc.code, _read_error(exc))) from None
         except TimeoutError as exc:
             raise LlmError("timeout") from exc
         except urllib.error.URLError as exc:

@@ -63,6 +63,15 @@ def build_validation(rainfall_rows: list[dict], harvest: dict | None) -> dict:
             "PalayStat publishes the Philippine Statistics Authority Palay Production Survey. "
             "These Nueva Ecija figures were downloaded from that survey's OpenSTAT tables."
         ),
+        "attribution": None
+        if not harvest
+        else harvest.get("attribution")
+        or (
+            "Philippine Statistics Authority OpenSTAT, Creative Commons Attribution 4.0, "
+            "https://openstat.psa.gov.ph/Terms. Credit the Philippine Statistics Authority. "
+            "Yield is production divided by harvested area, rounded to 0.01 tonnes per hectare."
+        ),
+        "terms_url": "https://openstat.psa.gov.ph/Terms",
         "years_covered": None
         if not covered
         else {"first": covered[0], "last": covered[-1]},

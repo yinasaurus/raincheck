@@ -105,6 +105,13 @@ export function HarvestCheck({ report }: { report: ValidationBody }) {
           {report.source_url}
         </a>
       </p>
+      <p className="mt-2 text-sm leading-6" data-testid="harvest-attribution">
+        Credit: Philippine Statistics Authority.{" "}
+        <a className="text-water underline" href={report.terms_url || "https://openstat.psa.gov.ph/Terms"}>
+          {report.terms_url || "https://openstat.psa.gov.ph/Terms"}
+        </a>
+        . Yield is production divided by harvested area, rounded to 0.01 tonnes per hectare.
+      </p>
       <p className="mt-2 text-sm leading-6">{report.sample_size_warning}</p>
       <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6">
         {(report.limitations ?? []).slice(1).map((line) => (

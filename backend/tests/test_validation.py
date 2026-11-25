@@ -103,6 +103,9 @@ def test_a_year_with_no_harvest_is_null():
 def test_the_live_check_uses_the_saved_survey_and_leaves_2026_blank():
     body = TestClient(app).get("/api/validation").json()
     assert body["source_name"] == "PhilRice PalayStat"
+    assert "Philippine Statistics Authority" in body["attribution"]
+    assert body["terms_url"] == "https://openstat.psa.gov.ph/Terms"
+    assert "rounded to 0.01" in body["attribution"]
     assert body["source_url"] == "https://palaystat.philrice.gov.ph/"
     assert body["retrieval_date"] == "2026-11-24"
     assert body["n"] == 25

@@ -111,6 +111,8 @@ export interface ValidationBody {
   source_name?: string;
   source_url?: string;
   retrieval_date?: string | null;
+  attribution?: string | null;
+  terms_url?: string | null;
   n?: number;
   series?: ValidationYear[];
   spearman?: { correlation?: number; interval_low?: number; interval_high?: number; excludes_zero?: boolean } | null;

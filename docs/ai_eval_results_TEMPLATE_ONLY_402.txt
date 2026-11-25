@@ -1,0 +1,59 @@
+NOT AN LLM EVALUATION: Gemini returned HTTP 402; every answer is a template
+model: gemini-3.5-flash-lite
+date: 2026-11-25
+git: 13065189fee50ccb6ba0af6de782e003baa564f3
+cases: 62
+
+(a) is Gemini answers the guards kept, source=llm, over assistant answers in the category.
+(b) is shown answers that passed the case, including llm, llm+facts, and template.
+llm+facts means a true model answer with a missing verified sentence appended.
+what-if has no source. Its (a) is n/a.
+w09 still expects a reject. A pass there would mean the model refused the Filipino phrase.
+
+category      before (40)   run 1 (b)  run 2 (b)  run 3 (b)
+normal            12/12 (100%)       12/12 (100%)       12/12 (100%)       12/12 (100%)
+relief              6/6 (100%)         6/6 (100%)         6/6 (100%)         6/6 (100%)
+adversarial       12/12 (100%)       12/12 (100%)       12/12 (100%)       12/12 (100%)
+whatif              9/10 (90%)       10/10 (100%)       10/10 (100%)       10/10 (100%)
+semantic                   n/a       16/16 (100%)       16/16 (100%)       16/16 (100%)
+model                      n/a         3/3 (100%)         3/3 (100%)         3/3 (100%)
+scope                      n/a         3/3 (100%)         3/3 (100%)         3/3 (100%)
+all                39/40 (98%)       62/62 (100%)       62/62 (100%)       62/62 (100%)
+
+Shown source and guard acceptance:
+run 1:
+  normal: (a) gemini kept 0/12 (0%); (b) shown correct 12/12 (100%); shown gemini 0/12 (0%); shown llm+facts 0/12 (0%); shown template 12/12 (100%); shown cache 0/12 (0%)
+  relief: (a) gemini kept 0/6 (0%); (b) shown correct 6/6 (100%); shown gemini 0/6 (0%); shown llm+facts 0/6 (0%); shown template 6/6 (100%); shown cache 0/6 (0%)
+  adversarial: (a) gemini kept 0/12 (0%); (b) shown correct 12/12 (100%); shown gemini 0/12 (0%); shown llm+facts 0/12 (0%); shown template 12/12 (100%); shown cache 0/12 (0%)
+  whatif: (a) gemini kept n/a; (b) shown correct 10/10 (100%); shown gemini n/a; shown llm+facts n/a; shown template n/a; shown cache n/a
+  semantic: (a) gemini kept 0/16 (0%); (b) shown correct 16/16 (100%); shown gemini 0/16 (0%); shown llm+facts 0/16 (0%); shown template 16/16 (100%); shown cache 0/16 (0%)
+  model: (a) gemini kept 0/3 (0%); (b) shown correct 3/3 (100%); shown gemini 0/3 (0%); shown llm+facts 0/3 (0%); shown template 3/3 (100%); shown cache 0/3 (0%)
+  scope: (a) gemini kept 0/3 (0%); (b) shown correct 3/3 (100%); shown gemini 0/3 (0%); shown llm+facts 0/3 (0%); shown template 3/3 (100%); shown cache 0/3 (0%)
+  number-check 0, semantic 0 {}, completions 0, other guard 0, fallback 100%, median 0.508s, llm calls 120, refusals 17
+  discards by category: {}
+run 2:
+  normal: (a) gemini kept 0/12 (0%); (b) shown correct 12/12 (100%); shown gemini 0/12 (0%); shown llm+facts 0/12 (0%); shown template 12/12 (100%); shown cache 0/12 (0%)
+  relief: (a) gemini kept 0/6 (0%); (b) shown correct 6/6 (100%); shown gemini 0/6 (0%); shown llm+facts 0/6 (0%); shown template 6/6 (100%); shown cache 0/6 (0%)
+  adversarial: (a) gemini kept 0/12 (0%); (b) shown correct 12/12 (100%); shown gemini 0/12 (0%); shown llm+facts 0/12 (0%); shown template 12/12 (100%); shown cache 0/12 (0%)
+  whatif: (a) gemini kept n/a; (b) shown correct 10/10 (100%); shown gemini n/a; shown llm+facts n/a; shown template n/a; shown cache n/a
+  semantic: (a) gemini kept 0/16 (0%); (b) shown correct 16/16 (100%); shown gemini 0/16 (0%); shown llm+facts 0/16 (0%); shown template 16/16 (100%); shown cache 0/16 (0%)
+  model: (a) gemini kept 0/3 (0%); (b) shown correct 3/3 (100%); shown gemini 0/3 (0%); shown llm+facts 0/3 (0%); shown template 3/3 (100%); shown cache 0/3 (0%)
+  scope: (a) gemini kept 0/3 (0%); (b) shown correct 3/3 (100%); shown gemini 0/3 (0%); shown llm+facts 0/3 (0%); shown template 3/3 (100%); shown cache 0/3 (0%)
+  number-check 0, semantic 0 {}, completions 0, other guard 0, fallback 100%, median 0.485s, llm calls 120, refusals 17
+  discards by category: {}
+run 3:
+  normal: (a) gemini kept 0/12 (0%); (b) shown correct 12/12 (100%); shown gemini 0/12 (0%); shown llm+facts 0/12 (0%); shown template 12/12 (100%); shown cache 0/12 (0%)
+  relief: (a) gemini kept 0/6 (0%); (b) shown correct 6/6 (100%); shown gemini 0/6 (0%); shown llm+facts 0/6 (0%); shown template 6/6 (100%); shown cache 0/6 (0%)
+  adversarial: (a) gemini kept 0/12 (0%); (b) shown correct 12/12 (100%); shown gemini 0/12 (0%); shown llm+facts 0/12 (0%); shown template 12/12 (100%); shown cache 0/12 (0%)
+  whatif: (a) gemini kept n/a; (b) shown correct 10/10 (100%); shown gemini n/a; shown llm+facts n/a; shown template n/a; shown cache n/a
+  semantic: (a) gemini kept 0/16 (0%); (b) shown correct 16/16 (100%); shown gemini 0/16 (0%); shown llm+facts 0/16 (0%); shown template 16/16 (100%); shown cache 0/16 (0%)
+  model: (a) gemini kept 0/3 (0%); (b) shown correct 3/3 (100%); shown gemini 0/3 (0%); shown llm+facts 0/3 (0%); shown template 3/3 (100%); shown cache 0/3 (0%)
+  scope: (a) gemini kept 0/3 (0%); (b) shown correct 3/3 (100%); shown gemini 0/3 (0%); shown llm+facts 0/3 (0%); shown template 3/3 (100%); shown cache 0/3 (0%)
+  number-check 0, semantic 0 {}, completions 0, other guard 0, fallback 100%, median 0.483s, llm calls 120, refusals 17
+  discards by category: {}
+
+Failures (any run):
+none
+
+Discards by category and rule:
+none

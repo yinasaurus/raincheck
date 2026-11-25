@@ -76,6 +76,9 @@ test("the 26-season table shows the harvest beside each season", async ({ page }
   await card.getByRole("button", { name: "View as table" }).click();
   await expect(card.getByRole("table")).toContainText("2015");
   await expect(card).toContainText("palaystat.philrice.gov.ph");
+  await expect(card).toContainText("Philippine Statistics Authority");
+  await expect(card).toContainText("https://openstat.psa.gov.ph/Terms");
+  await expect(card).toContainText("rounded to 0.01 tonnes per hectare");
   await expect(card).toContainText("The sample is small");
 });
 
